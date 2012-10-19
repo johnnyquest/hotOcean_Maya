@@ -489,9 +489,9 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 		} //if (_initTangentSpace)) && (deformSpace == 2)
 
 
+
 		if (_mesh_changed && doVertexColors)
 		{
-
 			_vertexNumberList.setLength(inputMesh.numFaceVertices());
 
 			MIntArray vertexList;
@@ -514,7 +514,9 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 				}
 			}
 
-		}//if (doVertexColors)
+		} // if (doVertexColors)
+
+
 		_mesh_changed = false;
 
 		if (deformSpace == 2)
@@ -574,8 +576,8 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 		else //object or worldspace
 		{
 #pragma omp parallel for
-			for (int i=0; i<nPoints; i++) {
-
+			for (int i=0; i<nPoints; i++)
+			{
 				drw::EvalData evaldata;
 				MPoint pt = verts[i];
 
@@ -628,13 +630,16 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 			//	cout << "Found Set: " << existingColorSets[i].asChar() << std::endl;
 
 			//}
-			MString setName = MString("jMinus");
+			MString setName;
+
+			setName = MString("jMinus");
 			status = inputMesh.clearColors(&setName);
 			McheckErr(status, "Error clearing colors.\n");
 			status = inputMesh.setColors(jMinus,&setName);
 			McheckErr(status, "Error setting colors.\n");
 			status = inputMesh.assignColors(_vertexNumberList,&setName);
 			McheckErr(status, "Error assigning colors.\n");
+
 			setName = MString("jPlus");
 			status = inputMesh.clearColors(&setName);
 			McheckErr(status, "Error clearing colors.\n");
@@ -642,6 +647,7 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 			McheckErr(status, "Error setting colors.\n");
 			status = inputMesh.assignColors(_vertexNumberList,&setName);
 			McheckErr(status, "Error assigning colors.\n");
+
 			setName = MString("eMinus");
 			status = inputMesh.clearColors(&setName);
 			McheckErr(status, "Error clearing colors.\n");
@@ -649,6 +655,7 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 			McheckErr(status, "Error setting colors.\n");
 			status = inputMesh.assignColors(_vertexNumberList,&setName);
 			McheckErr(status, "Error assigning colors.\n");
+
 			setName = MString("ePlus");
 			status = inputMesh.clearColors(&setName);
 			McheckErr(status, "Error clearing colors.\n");
@@ -661,8 +668,6 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 			//sprintf_s( buffer, "polyOptions -colorShadedDisplay true %s",inputMesh.name().asChar());
 			//status = MGlobal::executeCommand(buffer);
 			//if (status != MS::kSuccess) MGlobal::displayError("Error displaying colors");
-
-
 
 			//inputMesh.cleanupEdgeSmoothing();
 			//status = inputMesh.updateSurface();
