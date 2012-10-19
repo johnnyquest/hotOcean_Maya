@@ -2,10 +2,10 @@
 /***************************************************************************
  * hotOcean.cpp      a maya deformer to displace a surface using
  * the Houdini Ocean Toolkit code
- *    
+ *
  * implementation Nico Rehberg <mail@nico-rehberg.de>
- * 
- * 
+ *
+ *
  * The Houdini Ocean Toolkit is copyrighted by Drew Whitehouse
  * see http://odforce.net/wiki/index.php/HoudiniOceanToolkit
  *
@@ -18,20 +18,20 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * 
+ *
+ *
  ***************************************************************************/
 
 
 #include <string.h>
 #include <maya/MIOStream.h>
-#include <math.h> 
+#include <math.h>
 
 #include <maya/MPxDeformerNode.h>
 #include <maya/MItGeometry.h>
- 
-#include <maya/MTypeId.h> 
-#include <maya/MPlug.h> 
+
+#include <maya/MTypeId.h>
+#include <maya/MPlug.h>
 #include <maya/MDataBlock.h>
 #include <maya/MDataHandle.h>
 
@@ -54,68 +54,61 @@
 #include <maya/MIntArray.h>
 
 
-#define McheckErr(stat,msg) if ( MS::kSuccess != stat ) { cerr << msg; return MS::kFailure; }
-#define M_PI        3.14159265358979323846	
-
 class hotOceanDeformer : public MPxDeformerNode
 {
-public: 
+public:
 
 	hotOceanDeformer();
-    virtual                         ~hotOceanDeformer();
+	virtual			~hotOceanDeformer();
 
-	static void *creator();
-	static MStatus initialize();
+	static void *		creator();
+	static MStatus		initialize();
 
-	virtual MStatus setDependentsDirty(
-		const MPlug &plugBeingDirtied,
-        MPlugArray &affectedPlugs );
+	virtual MStatus		setDependentsDirty( const MPlug &, MPlugArray & );
+	virtual MStatus		compute( const MPlug &, MDataBlock & );
 
-	virtual MStatus compute( const MPlug &, MDataBlock & );
 /*
-	virtual MStatus deform( 
-		MDataBlock &block,
-		MItGeometry &iter,
-		const MMatrix &mat,
-		unsigned int multiIndex);
+	virtual MStatus		deform( MDataBlock &, MItGeometry &, const MMatrix &, unsigned int );
 */
+
 public:
-        // attributes
-        //
-		static  MObject globalScale;
-        static  MObject resolution;             //grid aufloesung
-		static  MObject size;             // The../Source/deformer/hotOcean.cpp:153: error: ‘MFnEnumAttribute’ was not declared in this scope grid mentiond above is computed for and applied to the input geometry in tiles of this size.
-		static  MObject windSpeed;     // Wind Speed - Affects the shape of the waves, "Windspeed (m/s)"
-		static  MObject waveHeigth;
-		static  MObject shortestWave;    // Shortest Wavelength(m)
-		static  MObject choppiness;
-		static  MObject windDirection;    // Wind direction in degrees
-		static  MObject dampReflections;    // Damp reflections - In a fully developed ocean you will have waves travelling in both the forward and backwards directions. This parameter damps out the negative direcion waves.
-		static  MObject windAlign;    // Wind Alignment - Controls how closely the waves travel in the direction of the wind.
-		static  MObject oceanDepth;  // Ocean Depth - Affects the spectrum of waves generated. Visually in doesnt seem to have that great an influence.
-		static  MObject time;
-		static  MObject seed;   //Seed - Seeds the random number generator. 
-		static  MObject interpolation;             //interpolate linear or smooth
-		static  MObject deformSpace;
-		static  MObject vertexColor;
-        static  MTypeId         id;
+	// attributes
+	//
+	static  MObject globalScale;
+	static  MObject resolution;		//grid aufloesung
+	static  MObject size;			// The grid mentiond above is computed for and applied to the input geometry in tiles of this size.
+	static  MObject windSpeed;		// Wind Speed - Affects the shape of the waves, "Windspeed (m/s)"
+	static  MObject waveHeigth;
+	static  MObject shortestWave;		// Shortest Wavelength(m)
+	static  MObject choppiness;
+	static  MObject windDirection;		// Wind direction in degrees
+	static  MObject dampReflections;	// Damp reflections - In a 'fully developed' ocean you will have waves travelling in both the forward and backwards directions. This parameter damps out the negative direcion waves.
+	static  MObject windAlign;		// Wind Alignment - Controls how closely the waves travel in the direction of the wind.
+	static  MObject oceanDepth;		// Ocean Depth - Affects the spectrum of waves generated. Visually in doesnt seem to have that great an influence.
+	static  MObject time;
+	static  MObject seed;			// Seed - Seeds the random number generator.
+	static  MObject interpolation;		// interpolation: linear or smooth
+	static  MObject deformSpace;
+	static  MObject vertexColor;
+	static  MTypeId id;
 
 protected:
-	 // This is where all the wave action takes place
-    drw::Ocean        *_ocean;
-    drw::OceanContext *_ocean_context;
-    float              _ocean_scale;
+	// This is where all the wave action takes place
+	drw::Ocean *		_ocean;
+	drw::OceanContext *	_ocean_context;
+	float              	_ocean_scale;
 
-    // If this is true we will create a new instance of drw::Ocean 
-    // next time it runs.
-    bool _ocean_needs_rebuild;
-	bool _mesh_changed;
-	bool _initTangentSpace;
+	// If this is true we will create a new instance of drw::Ocean
+	// next time it runs.
+	bool			_ocean_needs_rebuild;
+	bool			_mesh_changed;
+	bool			_initTangentSpace;
 
-	MVectorArray _tangents;
-	MVectorArray _normals;
-	MVectorArray _binormals;
-	MFloatArray _uList, _vList;
-	MIntArray	_vertexNumberList;
-
+	MVectorArray		_tangents;
+	MVectorArray		_normals;
+	MVectorArray		_binormals;
+	MFloatArray		_uList, _vList;
+	MIntArray		_vertexNumberList;
 };
+
+
