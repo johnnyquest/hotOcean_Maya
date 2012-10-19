@@ -138,7 +138,7 @@ def build(bld):
 	#print env['CC_VERSION']
 	
 	import os
-	for top, dirs, files in os.walk('./Source/deformer'):
+	for top, dirs, files in os.walk('./source/deformer'):
 		for nm in files:       
 			fp = os.path.join(top, nm)
 			spl = fp.split(".")
