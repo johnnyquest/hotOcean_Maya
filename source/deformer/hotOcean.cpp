@@ -484,7 +484,7 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 				}
 			}
 
-			_initTangentSpace == false;
+			_initTangentSpace = false;
 
 		} //if (_initTangentSpace)) && (deformSpace == 2)
 
