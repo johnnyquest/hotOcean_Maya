@@ -1,0 +1,10 @@
+prefix=/home/tusi/work/hot/hotOcean_Maya/3rdparty/linux
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: FFTW
+Description: fast Fourier transform library
+Version: 3.2.2
+Libs: -L${libdir} -lfftw3f -lm
+Cflags: -I${includedir}
