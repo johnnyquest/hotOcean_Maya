@@ -1,0 +1,33 @@
+.waf*
+.*-waf*
+build
+
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+tmp/
+
+3rdparty/linux
+3rdparty/osx
+3rdparty/win32
+3rdparty/win64
+
+3rdparty/src/*/doc
+
+
+# maya stuff
+*.swatches
+
+
