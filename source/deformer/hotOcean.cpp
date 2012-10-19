@@ -27,13 +27,11 @@
 #define McheckErr(stat,msg) if ( MS::kSuccess != stat ) { cerr << msg; return MS::kFailure; }
 
 
-const float M_PI = 3.14159265358979323846;
+#define M_PI 3.14159265358979323846
 
 
+MTypeId		hotOceanDeformer::id( 0x0007443a );
 
-MTypeId     hotOceanDeformer::id( 0x0007443a );
-
-// attributes  //
 MObject		hotOceanDeformer::globalScale;
 MObject		hotOceanDeformer::resolution;
 MObject		hotOceanDeformer::size;
@@ -212,29 +210,31 @@ MStatus hotOceanDeformer::initialize()
 
 	// affects
 	//
-	attributeAffects( hotOceanDeformer::globalScale, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::resolution, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::size, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::windSpeed, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::waveHeigth, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::shortestWave, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::choppiness, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::windDirection, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::dampReflections, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::windAlign, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::oceanDepth, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::time, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::seed, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::interpolation, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::deformSpace, hotOceanDeformer::outputGeom );
-	attributeAffects( hotOceanDeformer::vertexColor, hotOceanDeformer::outputGeom );
+	attributeAffects( globalScale, outputGeom );
+	attributeAffects( resolution, outputGeom );
+	attributeAffects( size, outputGeom );
+	attributeAffects( windSpeed, outputGeom );
+	attributeAffects( waveHeigth, outputGeom );
+	attributeAffects( shortestWave, outputGeom );
+	attributeAffects( choppiness, outputGeom );
+	attributeAffects( windDirection, outputGeom );
+	attributeAffects( dampReflections, outputGeom );
+	attributeAffects( windAlign, outputGeom );
+	attributeAffects( oceanDepth, outputGeom );
+	attributeAffects( time, outputGeom );
+	attributeAffects( seed, outputGeom );
+	attributeAffects( interpolation, outputGeom );
+	attributeAffects( deformSpace, outputGeom );
+	attributeAffects( vertexColor, outputGeom );
 
 	return MS::kSuccess;
 }
 
+
+
 MStatus hotOceanDeformer::setDependentsDirty(
-        const MPlug &plugBeingDirtied,
-        MPlugArray &affectedPlugs )
+	const MPlug &plugBeingDirtied,
+	MPlugArray &affectedPlugs )
 {
 	if (!(( plugBeingDirtied.partialName() == "t" ) || plugBeingDirtied.partialName() == "en")) {
 		//cout << "######### HotOcean need rebuild because of = " << plugBeingDirtied.partialName() << std::endl;
@@ -255,28 +255,20 @@ MStatus hotOceanDeformer::setDependentsDirty(
 }
 
 
-//MStatus
-//hotOceanDeformer::deform( MDataBlock& block,
-//                            MItGeometry& iter,
-//                            const MMatrix& worldSpace,
-//                            unsigned int multiIndex)
+
+/*
+MStatus hotOceanDeformer::deform( MDataBlock& block,
+	MItGeometry& iter,
+	const MMatrix& worldSpace,
+	unsigned int multiIndex )
+{
+}
+*/
+
+
 
 MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
-
-//
-// Method: deform
-//
-//
-//
-// Arguments:
-//   block              : the datablock of the node
-//       iter           : an iterator for the geometry to be deformed
-//   worldSpace                  : matrix to transform the point into world space
-//       multiIndex : the index of the geometry that we are deforming
-//
-//
 {
-
 	MStatus status = MS::kSuccess;
 	if (plug.attribute() == outputGeom) {
 
@@ -367,12 +359,13 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 				delete _ocean_context;
 			}
 
-			_ocean = new drw::Ocean(resolution,resolution,size/float(resolution),size/float(resolution),
-			                        windSpeed,shortestWave,0.00001f, windDirection/180.0f * M_PI,
-			                        1.0f-dampReflections,windAlign,oceanDepth,seed);
-			_ocean_scale   = _ocean->get_height_normalize_factor();
+			_ocean = new drw::Ocean(resolution, resolution,
+				size/float(resolution), size/float(resolution),
+				windSpeed, shortestWave, 0.00001f, windDirection/180.0f * M_PI,
+				1.0f-dampReflections, windAlign, oceanDepth, seed);
 
-			_ocean_context = _ocean->new_context(true,(choppiness>0),false,true);
+			_ocean_scale   = _ocean->get_height_normalize_factor();
+			_ocean_context = _ocean->new_context(true, choppiness>0, false, true);
 
 			_ocean_needs_rebuild = false;
 			// cout << "######### HotOcean, rebuilt ocean, norm_factor = " << _ocean_scale
@@ -382,8 +375,8 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 		}
 
 		// sum up the waves at this timestep
-		_ocean->update( time,*_ocean_context,true,(choppiness>0),false,true,
-		                _ocean_scale * waveHeigth,choppiness);
+		_ocean->update( time, *_ocean_context, true, (choppiness>0), false, true,
+			_ocean_scale * waveHeigth, choppiness);
 
 		unsigned int mIndex = plug.logicalIndex();
 		MObject thisNode = this->thisMObject();
@@ -405,14 +398,12 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 
 		const float envGlobalScale = env * globalScale;
 		const float oneOverGlobalScale = 1.0/globalScale;
+
 		const MColor black = MColor(0.0, 0.0, 0.0);
 		MColorArray jMinus = MColorArray(nPoints, black);
 		MColorArray jPlus = MColorArray(nPoints, black);
 		MColorArray eMinus = MColorArray(nPoints, black);
 		MColorArray ePlus = MColorArray(nPoints, black);
-
-		//cout << "thisNode " << this->name() << std::endl;
-
 
 		//bool setExists = 0;
 		//MStringArray existingColorSets;
@@ -437,7 +428,6 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 			//status = MGlobal::executeCommand("polyColorPerVertex -rgb 0.5 0.0 0.0 " + inputMesh.name());
 			//if (status != MS::kSuccess) MGlobal::displayError("Error coloring colorSet");
 
-			cout << "Creating Sets"  << std::endl;
 			MString tmp;
 			tmp = "jMinus";
 			status = inputMesh.createColorSetDataMesh(tmp);
@@ -448,7 +438,7 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 
 			//if (status != MS::kSuccess) MGlobal::displayError("Error coloring colorSet");
 			//sprintf_s( buffer, "setAttr \"%s.difs\" 0",inputMesh.name().asChar());
-			cout << inputMesh.name() << std::endl;
+			//cout << inputMesh.name() << std::endl;
 			//status = MGlobal::executeCommand("setAttr \"" + meshName + ".difs\" 0");
 
 
@@ -464,7 +454,6 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 			status = inputMesh.createColorSetDataMesh(tmp);
 			McheckErr(status, "Error creating colorset.\n");
 		}
-
 
 
 		if ((_initTangentSpace) && (deformSpace == 2)) {
@@ -499,12 +488,11 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 
 		} //if (_initTangentSpace)) && (deformSpace == 2)
 
-		if ((_mesh_changed) && (doVertexColors))
+
+		if (_mesh_changed && doVertexColors)
 		{
 
 			_vertexNumberList.setLength(inputMesh.numFaceVertices());
-
-			cout << "Listlegth "  << inputMesh.numFaceVertices() <<std::endl;
 
 			MIntArray vertexList;
 			int colorIndex;
@@ -545,6 +533,7 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 				verts[i] += evaldata.disp[0] * envGlobalScale * _tangents[i];
 				verts[i] += evaldata.disp[1] * envGlobalScale * _normals[i];
 				verts[i] += evaldata.disp[2] * envGlobalScale * _binormals[i];
+
 				if (doVertexColors)
 				{
 					jMinus.set(i,evaldata.Jminus,evaldata.Jminus,evaldata.Jminus);
@@ -691,17 +680,19 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 	return status;
 }
 
-// standard initialization procedures
-//
+
 
 MStatus initializePlugin( MObject obj )
 {
 	MStatus result;
 	MFnPlugin plugin( obj, "Nico Rehberg" , "1.1", "Any");
 	result = plugin.registerNode( "hotOceanDeformer", hotOceanDeformer::id, hotOceanDeformer::creator,
-	                              hotOceanDeformer::initialize, MPxNode::kDeformerNode );
+		hotOceanDeformer::initialize, MPxNode::kDeformerNode );
+
 	return result;
 }
+
+
 
 MStatus uninitializePlugin( MObject obj)
 {
