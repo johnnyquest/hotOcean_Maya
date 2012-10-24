@@ -1,0 +1,22 @@
+[08 May 2012] 	Added 2013 64bit compile
+		Added object and tangentspace deformations to Maya 2012 and 2013 version (tangent only for the deformer, not the shader)
+
+[17 Apr 2011]	Added 2012 64bit compile
+
+[18 Dez 2010] 	Added 2010 32bit and 2011 32bit compile
+
+[18 Aug 2010]   Versions 2009+ are now multithreaded, esp. the deformer is much faster now.
+		Thanks to Christian Schnellhammer
+
+[11 Mai 2010] 	Added 2011 64bit compile
+
+[28 Nov 2009] 	Added 2010 64bit compile, thanks to Moonangel
+
+[13 Nov 2009] 	Added shortnames to mi files
+
+[11 Nov 2009] 	fixed a bug in the deformer, it now matches the shader on all frames
+		reworked the shader, added an displacement input
+		added compiles for Maya 2008
+
+[22 Oct 2009] 	Initial Release
+
