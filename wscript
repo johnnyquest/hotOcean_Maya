@@ -93,7 +93,6 @@ def configure(cfg):
 		#libpath.append('./3rdparty/linux/lib/')
 		libpath.append('%s/3rdparty/linux/lib/' % cwd)
 	else:
-		print "WHADDAFUCK:", cwd
 		libpath.append('%s/3rdparty/win64/' % cwd)
 
 
