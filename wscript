@@ -35,15 +35,18 @@ def configure(cfg):
 
 	env = cfg.env
 	env.arch = arch
-	
+
+	env.append_value('DEFINES', 'REQUIRE_IOSTREAM'.split())
+
 	if is_linux:
-		env.append_value('DEFINES', 'UNIX LINUX UNIX64 LINUX_64 FUNCPROTO _GNU_SOURCE NDEBUG REQUIRE_IOSTREAM _BOOL'.split())
+		env.append_value('DEFINES', 'UNIX LINUX UNIX64 LINUX_64 FUNCPROTO _GNU_SOURCE NDEBUG _BOOL'.split())
 	else:
+		env.append_value('DEFINES', 'WIN32 _WIN32 NDEBUG _WINDOWS _AFXDLL _MBCS NT_PLUGIN WIN32_LEAN_AND_MEAN'.split())
+
 		if arch == "x64":
-			env.append_value('DEFINES', 'WIN32 NDEBUG _WINDOWS _AFXDLL _MBCS NT_PLUGIN REQUIRE_IOSTREAM Bits64_ _WIN32 WIN32_LEAN_AND_MEAN'.split())	
-		else:
-			env.append_value('DEFINES', 'WIN32 NDEBUG _WINDOWS _AFXDLL _MBCS NT_PLUGIN REQUIRE_IOSTREAM _WIN32 WIN32_LEAN_AND_MEAN'.split())	
-	
+			env.append_value('DEFINES', 'Bits64_'.split())	
+
+
 	includes = []
 
 	env.maya_version = str(opt.maya).lower()
@@ -60,11 +63,11 @@ def configure(cfg):
 	# hot #1
 	#
 	if is_linux:
-		includes.append('./3rdparty/linux/include')
+		includes.append('%s/3rdparty/linux/include' % cwd)
 	else:
-		includes.append('./3rdparty/win64')
+		includes.append('%s/3rdparty/win64' % cwd)
 
-	includes.append('./3rdparty/include')
+	includes.append('%s/3rdparty/include' % cwd)
 
 
 	env.append_value('INCLUDES', includes)
