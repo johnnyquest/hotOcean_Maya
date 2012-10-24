@@ -1,5 +1,6 @@
 .waf*
 .*-waf*
+waf-*
 build
 
 

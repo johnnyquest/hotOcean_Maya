@@ -12,8 +12,10 @@ def configure(cfg):
 	import sys
 	print sys.platform
 	is_linux = not sys.platform[0:3] == "win"
+
 	opt = cfg.options
 	arch = str(opt.arch).lower()
+	
 	if not is_linux:
 		cfg.env['MSVC_VERSIONS'] = ['msvc 8.0', 'msvc 9.0', 'msvc 10.0']
 		if arch == "x86":
@@ -26,6 +28,7 @@ def configure(cfg):
 		#print cfg.env
 		cfg.load('compiler_cxx')
 		print cfg.env['CC_VERSION']
+
 
 	env = cfg.env
 	env.arch = arch
@@ -55,7 +58,11 @@ def configure(cfg):
 	#
 	if is_linux:
 		includes.append('./3rdparty/linux/include')
+	else:
+		includes.append('./3rdparty/win64')
+
 	includes.append('./3rdparty/include')
+
 
 	env.append_value('INCLUDES', includes)
 	
@@ -74,10 +81,13 @@ def configure(cfg):
 	libpath.append(shared_path+"maya/"+maya_version+"/"+lib_arch)
 
 	# hot #3
+	# TODO: generate these absolute paths instead
 	#
 	if is_linux:
 		#libpath.append('./3rdparty/linux/lib/')
 		libpath.append('/home/tusi/work/hot/hotOcean_Maya/3rdparty/linux/lib/')
+	else:
+		libpath.append('W:/hot/hotOcean_Maya/3rdparty/win64/')
 
 
 	env.append_value("LIBPATH", libpath)
@@ -87,7 +97,10 @@ def configure(cfg):
 
 	# hot #2
 	#
-	libs += 'fftw3f blitz'.split()
+	if is_linux:
+		libs += 'fftw3f blitz'.split()
+	else:
+		libs += 'libfftw3f-3 blitz'.split()
 	
 	#if is_linux:
 	#	libs += "GL z".split()
