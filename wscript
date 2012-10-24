@@ -11,6 +11,9 @@ def options(opt):
 def configure(cfg):
 	import sys
 	print sys.platform
+	import os
+
+	cwd = os.getcwd().replace('\\', '/') # FUCK windows
 	is_linux = not sys.platform[0:3] == "win"
 
 	opt = cfg.options
@@ -85,9 +88,10 @@ def configure(cfg):
 	#
 	if is_linux:
 		#libpath.append('./3rdparty/linux/lib/')
-		libpath.append('/home/tusi/work/hot/hotOcean_Maya/3rdparty/linux/lib/')
+		libpath.append('%s/3rdparty/linux/lib/' % cwd)
 	else:
-		libpath.append('W:/hot/hotOcean_Maya/3rdparty/win64/')
+		print "WHADDAFUCK:", cwd
+		libpath.append('%s/3rdparty/win64/' % cwd)
 
 
 	env.append_value("LIBPATH", libpath)
