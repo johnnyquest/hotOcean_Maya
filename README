@@ -9,6 +9,9 @@ Minor modifications and various code cleanups and cosmetics
 by Szabolcs Horvatth (vertex color code) and Imre Tuske
 (sorted out build problems on linux; cross-platform build [waf] script).
 
+(NOTE: The vertex color code from Szabolcs is not yet included, but it
+will in the hopefully near future. :))
+
 The Houdini Ocean Toolkit is copyrighted by Drew Whitehouse
 see http://odforce.net/wiki/index.php/HoudiniOceanToolkit
 
