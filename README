@@ -20,6 +20,25 @@ http://www.finelightvisualtechnology.com/pages/coursematerials.php
 
 The fftw libary comes from http://www.fftw.org/
 
+--------------------------------------------------------------------------------
+
+HOW TO BUILD
+============
+
+The provided build script is written for waf (you'll need python).
+
+In your command line, type:
+
+	./waf distclean configure build
+
+
+or, if you don't have permissions right or you're on windows, type:
+
+	python waf distclean configure build
+
+
+You'll find the build .mll/.so in the root folder.
+
 
 --------------------------------------------------------------------------------
 
