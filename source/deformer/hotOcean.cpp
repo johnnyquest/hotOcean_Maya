@@ -47,6 +47,10 @@ MObject		hotOceanDeformer::seed;
 MObject		hotOceanDeformer::interpolation;
 MObject		hotOceanDeformer::deformSpace;
 MObject		hotOceanDeformer::vertexColor;
+MObject		hotOceanDeformer::doJMinus;
+MObject		hotOceanDeformer::doJPlus;
+MObject		hotOceanDeformer::doEMinus;
+MObject		hotOceanDeformer::doEPlus;
 
 
 
@@ -190,11 +194,25 @@ MStatus hotOceanDeformer::initialize()
 	eAttr.addField("tangent", 2);
 	addAttribute(deformSpace);
 
-	vertexColor = nAttr.create( "doVertexColor", "vertexColor", MFnNumericData::kBoolean );
-	nAttr.setDefault(false);
-	nAttr.setKeyable(false);
-	nAttr.setChannelBox(true);
-	addAttribute( vertexColor );
+	vertexColor = nAttr.create("vertexColor", "vertexColor", MFnNumericData::kBoolean, false);
+	nAttr.setKeyable(false); nAttr.setChannelBox(true);
+	addAttribute(vertexColor);
+
+	doJMinus = nAttr.create("doJMinus", "dojmn", MFnNumericData::kBoolean, false);
+	nAttr.setKeyable(false); nAttr.setChannelBox(true);
+	addAttribute(doJMinus);
+
+	doJPlus = nAttr.create("doJPlus", "dojps", MFnNumericData::kBoolean, false);
+	nAttr.setKeyable(false); nAttr.setChannelBox(true);
+	addAttribute(doJPlus);
+
+	doEMinus = nAttr.create("doEMinus", "doemn", MFnNumericData::kBoolean, false);
+	nAttr.setKeyable(false); nAttr.setChannelBox(true);
+	addAttribute(doEMinus);
+
+	doEPlus = nAttr.create("doEPlus", "doeps", MFnNumericData::kBoolean, false);
+	nAttr.setKeyable(false); nAttr.setChannelBox(true);
+	addAttribute(doEPlus);
 
 	attributeAffects( globalScale, outputGeom );
 	attributeAffects( resolution, outputGeom );
@@ -212,6 +230,10 @@ MStatus hotOceanDeformer::initialize()
 	attributeAffects( interpolation, outputGeom );
 	attributeAffects( deformSpace, outputGeom );
 	attributeAffects( vertexColor, outputGeom );
+	attributeAffects( doJMinus, outputGeom );
+	attributeAffects( doJPlus, outputGeom );
+	attributeAffects( doEMinus, outputGeom );
+	attributeAffects( doEPlus, outputGeom );
 
 	return MS::kSuccess;
 }

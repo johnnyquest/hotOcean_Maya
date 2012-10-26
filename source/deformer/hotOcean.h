@@ -90,6 +90,10 @@ public:
 	static MObject interpolation;
 	static MObject deformSpace;
 	static MObject vertexColor;
+	static MObject doJMinus;
+	static MObject doJPlus;
+	static MObject doEMinus;
+	static MObject doEPlus;
 
 	static MTypeId id;
 
