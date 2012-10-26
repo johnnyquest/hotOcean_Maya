@@ -24,12 +24,9 @@
 */
 
 #include "hotOcean.h"
-
-#define McheckErr(stat,msg) if ( MS::kSuccess != stat ) { cerr << msg; return MS::kFailure; }
-
+#include <maya/MGlobal.h>
 
 #define M_PI 3.14159265358979323846
-
 
 MTypeId		hotOceanDeformer::id( 0x0007443a );
 
@@ -269,81 +266,83 @@ MStatus hotOceanDeformer::deform( MDataBlock& block,
 
 MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 {
+#define CHK(msg) if ( MS::kSuccess!=status ) { MGlobal::displayError("[HOT|compute]: " msg); cerr << "[HOT|compute]: " msg << '\n'; return MS::kFailure; }
+
 	MStatus status = MS::kSuccess;
 	if (plug.attribute() == outputGeom) {
 
 		// get all attributes
 		//
 		MDataHandle globalScaleData = block.inputValue(globalScale,&status);
-		McheckErr(status, "Error getting globalScale data handle\n");
+		CHK("Error getting globalScale data handle");
 		double globalScale = globalScaleData.asDouble();
 
 		MDataHandle resolutionData = block.inputValue(resolution,&status);
-		McheckErr(status, "Error getting resolution data handle\n");
+		CHK("Error getting resolution data handle");
 		int resolution = resolutionData.asInt();
 		resolution = (int) pow(2.0,resolution);
 
 		MDataHandle sizeData = block.inputValue(size,&status);
-		McheckErr(status, "Error getting size data handle\n");
+		CHK("Error getting size data handle");
 		double size = sizeData.asDouble();
 
 		MDataHandle windSpeedData = block.inputValue(windSpeed,&status);
-		McheckErr(status, "Error getting windSpeed data handle\n");
+		CHK("Error getting windSpeed data handle");
 		double windSpeed = windSpeedData.asDouble();
 
 		MDataHandle waveHeightData = block.inputValue(waveHeight, &status);
-		McheckErr(status, "Error getting waveHeight data handle\n");
+		CHK("Error getting waveHeight data handle");
 		double waveHeight = waveHeightData.asDouble();
 
 		MDataHandle shortestWaveData = block.inputValue(shortestWave,&status);
-		McheckErr(status, "Error getting shortestWave data handle\n");
+		CHK("Error getting shortestWave data handle");
 		double shortestWave = shortestWaveData.asDouble();
 
 		MDataHandle choppinessData = block.inputValue(choppiness,&status);
-		McheckErr(status, "Error getting choppiness data handle\n");
+		CHK("Error getting choppiness data handle");
 		double choppiness = choppinessData.asDouble();
 
 		MDataHandle windDirectionData = block.inputValue(windDirection,&status);
-		McheckErr(status, "Error getting windDirection data handle\n");
+		CHK("Error getting windDirection data handle");
 		double windDirection = windDirectionData.asDouble();
 
 		MDataHandle dampReflectionsData = block.inputValue(dampReflections,&status);
-		McheckErr(status, "Error getting dampReflection data handle\n");
+		CHK("Error getting dampReflection data handle");
 		double dampReflections = dampReflectionsData.asDouble();
 
 		MDataHandle windAlignData = block.inputValue(windAlign,&status);
-		McheckErr(status, "Error getting windAlign data handle\n");
+		CHK("Error getting windAlign data handle");
 		double windAlign = windAlignData.asDouble();
 
 		MDataHandle oceanDepthData = block.inputValue(oceanDepth,&status);
-		McheckErr(status, "Error getting oceanDepth data handle\n");
+		CHK("Error getting oceanDepth data handle");
 		double oceanDepth = oceanDepthData.asDouble();
 
 		MDataHandle timeData = block.inputValue(time,&status);
-		McheckErr(status, "Error getting time data handle\n");
+		CHK("Error getting time data handle");
 		double time = timeData.asDouble();
 
 		MDataHandle seedData = block.inputValue(seed,&status);
-		McheckErr(status, "Error getting seed data handle\n");
+		CHK("Error getting seed data handle");
 		int seed = seedData.asInt();
 
 		MDataHandle interpolationData = block.inputValue(interpolation,&status);
-		McheckErr(status, "Error getting interpolation data handle\n");
+		CHK("Error getting interpolation data handle");
 		bool interpolation = interpolationData.asBool();
 
 		MDataHandle deformSpaceData = block.inputValue(deformSpace, &status );
-		McheckErr(status, "Error getting deformation space data handle\n");
+		CHK("Error getting deformation space data handle");
 		int deformSpace = deformSpaceData.asShort();	// Now get it as an SHORT
 
 		MDataHandle vertexColorsData = block.inputValue(vertexColor,&status);
-		McheckErr(status, "Error getting do Vertex Colors data handle\n");
+		CHK("Error getting do Vertex Colors data handle");
 		bool doVertexColors = false; //vertexColorsData.asBool();
 
 
 		// determine the envelope (this is a global scale factor)
 		//
 		MDataHandle envData = block.inputValue(envelope,&status);
-		McheckErr(status, "Error getting envelope data handle\n");
+		CHK("Error getting envelope data handle");
 		float env = envData.asFloat();
 
 		// if we need to (re)initialize the ocean, do this
@@ -390,8 +389,8 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 
 		MFnMesh inputMesh( inputGeomDataH.asMesh() );
 
-		MMatrix worldSpace;
-		worldSpace = inputGeomDataH.geometryTransformMatrix();
+		MMatrix worldSpace = inputGeomDataH.geometryTransformMatrix();
+		
 		MPointArray verts;
 		unsigned int nPoints = inputMesh.numVertices();
 		inputMesh.getPoints(verts);
@@ -434,7 +433,7 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 			MString tmp;
 			tmp = "jMinus";
 			status = inputMesh.createColorSetDataMesh(tmp);
-			McheckErr(status, "Error creating colorset.\n");
+			CHK("Error creating colorset.");
 
 			//sprintf_s( buffer, "polyColorPerVertex -rgb 0.5 0.0 0.0 %s",this->name().asChar());
 			//status = MGlobal::executeCommand(buffer);
@@ -447,15 +446,15 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 
 			tmp = "jPlus";
 			status = inputMesh.createColorSetDataMesh(tmp);
-			McheckErr(status, "Error creating colorset.\n");
+			CHK("Error creating colorset.");
 
 			tmp = "eMinus";
 			status = inputMesh.createColorSetDataMesh(tmp);
-			McheckErr(status, "Error creating colorset.\n");
+			CHK("Error creating colorset.");
 
 			tmp = "ePlus";
 			status = inputMesh.createColorSetDataMesh(tmp);
-			McheckErr(status, "Error creating colorset.\n");
+			CHK("Error creating colorset.");
 		}
 
 
@@ -566,7 +565,7 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 				cout << "Found Set: " << existingColorSets[i].asChar() << std::endl;
 			}*/
 			//status = inputMesh.setCurrentColorSetName(setName);
-			//McheckErr(status, "Error switching to colorset.\n");
+			//CHK("Error switching to colorset.");
 
 			//status = inputMesh.setFaceColors(jMinus, vertexNumberList);
 			//cout << "ColorNum " << jMinus.length() << " IndexNum "<< vertexNumberList.length() <<  std::endl;
@@ -624,7 +623,7 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 		if (doVertexColors)
 		{
 			//status = inputMesh.createColorSetDataMesh(setName);
-			//McheckErr(status, "Error creating colorset.\n");
+			//CHK("Error creating colorset.");
 			//MStringArray existingColorSets;
 			//inputMesh.getColorSetNames(existingColorSets);
 			////setExists = 0;
@@ -637,35 +636,35 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 
 			setName = MString("jMinus");
 			status = inputMesh.clearColors(&setName);
-			McheckErr(status, "Error clearing colors.\n");
+			CHK("Error clearing colors.");
 			status = inputMesh.setColors(jMinus,&setName);
-			McheckErr(status, "Error setting colors.\n");
+			CHK("Error setting colors.");
 			status = inputMesh.assignColors(_vertexNumberList,&setName);
-			McheckErr(status, "Error assigning colors.\n");
+			CHK("Error assigning colors.");
 
 			setName = MString("jPlus");
 			status = inputMesh.clearColors(&setName);
-			McheckErr(status, "Error clearing colors.\n");
+			CHK("Error clearing colors.");
 			status = inputMesh.setColors(jPlus,&setName);
-			McheckErr(status, "Error setting colors.\n");
+			CHK("Error setting colors.");
 			status = inputMesh.assignColors(_vertexNumberList,&setName);
-			McheckErr(status, "Error assigning colors.\n");
+			CHK("Error assigning colors.");
 
 			setName = MString("eMinus");
 			status = inputMesh.clearColors(&setName);
-			McheckErr(status, "Error clearing colors.\n");
+			CHK("Error clearing colors.");
 			status = inputMesh.setColors(eMinus,&setName);
-			McheckErr(status, "Error setting colors.\n");
+			CHK("Error setting colors.");
 			status = inputMesh.assignColors(_vertexNumberList,&setName);
-			McheckErr(status, "Error assigning colors.\n");
+			CHK("Error assigning colors.");
 
 			setName = MString("ePlus");
 			status = inputMesh.clearColors(&setName);
-			McheckErr(status, "Error clearing colors.\n");
+			CHK("Error clearing colors.");
 			status = inputMesh.setColors(ePlus,&setName);
-			McheckErr(status, "Error setting colors.\n");
+			CHK("Error setting colors.");
 			status = inputMesh.assignColors(_vertexNumberList,&setName);
-			McheckErr(status, "Error assigning colors.\n");
+			CHK("Error assigning colors.");
 
 			//char buffer[512];
 			//sprintf_s( buffer, "polyOptions -colorShadedDisplay true %s",inputMesh.name().asChar());
@@ -674,18 +673,19 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 
 			//inputMesh.cleanupEdgeSmoothing();
 			//status = inputMesh.updateSurface();
-			//McheckErr(status, "Error redrawing.\n");
+			//CHK("Error redrawing.");
 			//status = inputMesh.setDisplayColors(true);
-			//McheckErr(status, "Error displaying colors.\n");
+			//CHK("Error displaying colors.");
 			//MColor temp = MColor(1.0f,0.0f,0.0f);
 			//inputMesh.setFaceColor(temp,0);
 			//status = inputMesh.setFaceColors(ePlus,_vertexNumberList);
-			//McheckErr(status, "test.\n");
+			//CHK("test.");
 		}
 	}
 
 
 	return status;
+#undef CHK
 }
 
 
