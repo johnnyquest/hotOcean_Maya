@@ -25,6 +25,7 @@
 
 #include "hotOcean.h"
 #include <maya/MGlobal.h>
+#include <stdexcept>
 
 #define M_PI 3.14159265358979323846
 
@@ -264,425 +265,450 @@ MStatus hotOceanDeformer::deform( MDataBlock& block,
 
 
 
-MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
+MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 {
-#define CHK(msg) if ( MS::kSuccess!=status ) { MGlobal::displayError("[HOT|compute]: " msg); cerr << "[HOT|compute]: " msg << '\n'; return MS::kFailure; }
+#define CHK(msg) if ( MS::kSuccess!=status ) { throw(msg); }
 
 	MStatus status = MS::kSuccess;
-	if (plug.attribute() == outputGeom) {
 
-		// get all attributes
-		//
-		MDataHandle globalScaleData = block.inputValue(globalScale,&status);
-		CHK("Error getting globalScale data handle");
-		double globalScale = globalScaleData.asDouble();
+	MFnDependencyNode	this_dnode(thisMObject(), &status);
+	MString			dnode_name = this_dnode.name(),
+				FN_dnode = dnode_name+": ";
 
-		MDataHandle resolutionData = block.inputValue(resolution,&status);
-		CHK("Error getting resolution data handle");
-		int resolution = resolutionData.asInt();
-		resolution = (int) pow(2.0,resolution);
-
-		MDataHandle sizeData = block.inputValue(size,&status);
-		CHK("Error getting size data handle");
-		double size = sizeData.asDouble();
-
-		MDataHandle windSpeedData = block.inputValue(windSpeed,&status);
-		CHK("Error getting windSpeed data handle");
-		double windSpeed = windSpeedData.asDouble();
-
-		MDataHandle waveHeightData = block.inputValue(waveHeight, &status);
-		CHK("Error getting waveHeight data handle");
-		double waveHeight = waveHeightData.asDouble();
-
-		MDataHandle shortestWaveData = block.inputValue(shortestWave,&status);
-		CHK("Error getting shortestWave data handle");
-		double shortestWave = shortestWaveData.asDouble();
-
-		MDataHandle choppinessData = block.inputValue(choppiness,&status);
-		CHK("Error getting choppiness data handle");
-		double choppiness = choppinessData.asDouble();
-
-		MDataHandle windDirectionData = block.inputValue(windDirection,&status);
-		CHK("Error getting windDirection data handle");
-		double windDirection = windDirectionData.asDouble();
-
-		MDataHandle dampReflectionsData = block.inputValue(dampReflections,&status);
-		CHK("Error getting dampReflection data handle");
-		double dampReflections = dampReflectionsData.asDouble();
-
-		MDataHandle windAlignData = block.inputValue(windAlign,&status);
-		CHK("Error getting windAlign data handle");
-		double windAlign = windAlignData.asDouble();
-
-		MDataHandle oceanDepthData = block.inputValue(oceanDepth,&status);
-		CHK("Error getting oceanDepth data handle");
-		double oceanDepth = oceanDepthData.asDouble();
-
-		MDataHandle timeData = block.inputValue(time,&status);
-		CHK("Error getting time data handle");
-		double time = timeData.asDouble();
-
-		MDataHandle seedData = block.inputValue(seed,&status);
-		CHK("Error getting seed data handle");
-		int seed = seedData.asInt();
-
-		MDataHandle interpolationData = block.inputValue(interpolation,&status);
-		CHK("Error getting interpolation data handle");
-		bool interpolation = interpolationData.asBool();
-
-		MDataHandle deformSpaceData = block.inputValue(deformSpace, &status );
-		CHK("Error getting deformation space data handle");
-		int deformSpace = deformSpaceData.asShort();	// Now get it as an SHORT
-
-		MDataHandle vertexColorsData = block.inputValue(vertexColor,&status);
-		CHK("Error getting do Vertex Colors data handle");
-		bool doVertexColors = false; //vertexColorsData.asBool();
-
-
-		// determine the envelope (this is a global scale factor)
-		//
-		MDataHandle envData = block.inputValue(envelope,&status);
-		CHK("Error getting envelope data handle");
-		float env = envData.asFloat();
-
-		// if we need to (re)initialize the ocean, do this
-		if (!_ocean || _ocean_needs_rebuild)
+	try
+	{
+		if (plug.attribute() == outputGeom)
 		{
-			if (_ocean)
+			// get all attributes
+			//
+			MDataHandle globalScaleData = block.inputValue(globalScale,&status);
+			CHK("Error getting globalScale data handle");
+			double globalScale = globalScaleData.asDouble();
+
+			MDataHandle resolutionData = block.inputValue(resolution,&status);
+			CHK("Error getting resolution data handle");
+			int resolution = resolutionData.asInt();
+			resolution = (int) pow(2.0,resolution);
+
+			MDataHandle sizeData = block.inputValue(size,&status);
+			CHK("Error getting size data handle");
+			double size = sizeData.asDouble();
+
+			MDataHandle windSpeedData = block.inputValue(windSpeed,&status);
+			CHK("Error getting windSpeed data handle");
+			double windSpeed = windSpeedData.asDouble();
+
+			MDataHandle waveHeightData = block.inputValue(waveHeight, &status);
+			CHK("Error getting waveHeight data handle");
+			double waveHeight = waveHeightData.asDouble();
+
+			MDataHandle shortestWaveData = block.inputValue(shortestWave,&status);
+			CHK("Error getting shortestWave data handle");
+			double shortestWave = shortestWaveData.asDouble();
+
+			MDataHandle choppinessData = block.inputValue(choppiness,&status);
+			CHK("Error getting choppiness data handle");
+			double choppiness = choppinessData.asDouble();
+
+			MDataHandle windDirectionData = block.inputValue(windDirection,&status);
+			CHK("Error getting windDirection data handle");
+			double windDirection = windDirectionData.asDouble();
+
+			MDataHandle dampReflectionsData = block.inputValue(dampReflections,&status);
+			CHK("Error getting dampReflection data handle");
+			double dampReflections = dampReflectionsData.asDouble();
+
+			MDataHandle windAlignData = block.inputValue(windAlign,&status);
+			CHK("Error getting windAlign data handle");
+			double windAlign = windAlignData.asDouble();
+
+			MDataHandle oceanDepthData = block.inputValue(oceanDepth,&status);
+			CHK("Error getting oceanDepth data handle");
+			double oceanDepth = oceanDepthData.asDouble();
+
+			MDataHandle timeData = block.inputValue(time,&status);
+			CHK("Error getting time data handle");
+			double time = timeData.asDouble();
+
+			MDataHandle seedData = block.inputValue(seed,&status);
+			CHK("Error getting seed data handle");
+			int seed = seedData.asInt();
+
+			MDataHandle interpolationData = block.inputValue(interpolation,&status);
+			CHK("Error getting interpolation data handle");
+			bool interpolation = interpolationData.asBool();
+
+			MDataHandle deformSpaceData = block.inputValue(deformSpace, &status );
+			CHK("Error getting deformation space data handle");
+			int deformSpace = deformSpaceData.asShort();	// Now get it as an SHORT
+
+			MDataHandle vertexColorsData = block.inputValue(vertexColor,&status);
+			CHK("Error getting do Vertex Colors data handle");
+			bool doVertexColors = false; //vertexColorsData.asBool();
+
+
+			// determine the envelope (this is a global scale factor)
+			//
+			MDataHandle envData = block.inputValue(envelope,&status);
+			CHK("Error getting envelope data handle");
+			float env = envData.asFloat();
+
+			// if we need to (re)initialize the ocean, do this
+			if (!_ocean || _ocean_needs_rebuild)
 			{
-				delete _ocean;
-			}
-
-			if (_ocean_context)
-			{
-				delete _ocean_context;
-			}
-
-			_ocean = new drw::Ocean(resolution, resolution,
-				size/float(resolution), size/float(resolution),
-				windSpeed, shortestWave, 0.00001f, windDirection/180.0f * M_PI,
-				1.0f-dampReflections, windAlign, oceanDepth, seed);
-
-			_ocean_scale   = _ocean->get_height_normalize_factor();
-			_ocean_context = _ocean->new_context(true, choppiness>0, false, true);
-
-			_ocean_needs_rebuild = false;
-			// cout << "######### HotOcean, rebuilt ocean, norm_factor = " << _ocean_scale
-			//<<	"resolution = " << resolution
-			//	 <<	"windSpeed = " << windSpeed
-			//<< std::endl;
-		}
-
-		// sum up the waves at this timestep
-		_ocean->update( time, *_ocean_context, true, (choppiness>0), false, true,
-			_ocean_scale * waveHeight, choppiness);
-
-		unsigned int mIndex = plug.logicalIndex();
-		MObject thisNode = this->thisMObject();
-		MPlug inPlug(thisNode,input);
-		inPlug.selectAncestorLogicalIndex(mIndex,input);
-
-		MDataHandle hInput = block.inputValue(inPlug);
-		MDataHandle inputGeomDataH = hInput.child(inputGeom);
-		MDataHandle hOutput = block.outputValue(plug);
-		hOutput.copy(inputGeomDataH);
-
-		MFnMesh inputMesh( inputGeomDataH.asMesh() );
-
-		MMatrix worldSpace = inputGeomDataH.geometryTransformMatrix();
-		
-		MPointArray verts;
-		unsigned int nPoints = inputMesh.numVertices();
-		inputMesh.getPoints(verts);
-
-
-		// some statics to speed things up
-
-		const float envGlobalScale = env * globalScale;
-		const float oneOverGlobalScale = 1.0/globalScale;
-
-		const MColor black = MColor(0.0, 0.0, 0.0);
-		MColorArray jMinus = MColorArray(nPoints, black);
-		MColorArray jPlus = MColorArray(nPoints, black);
-		MColorArray eMinus = MColorArray(nPoints, black);
-		MColorArray ePlus = MColorArray(nPoints, black);
-
-		//bool setExists = 0;
-		//MStringArray existingColorSets;
-		//inputMesh.getColorSetNames(existingColorSets);
-		//for (int i=0; i<existingColorSets.length(); i++)
-		//{
-		//	cout << "Found Set: " << existingColorSets[i].asChar() << std::endl;
-		//	setExists = 1;
-		//}
-
-
-		if (doVertexColors)
-		{
-			//Create one set per mel
-			char buffer[512];
-			//MString meshName = inputMesh.name();
-			//cout << inputMesh.name().asChar() << "  " << std::endl;
-			//sprintf_s( buffer, "polyColorSet -create -colorSet \"jMinus1\" %s",inputMesh.name().asChar());
-			//status = MGlobal::executeCommand(buffer);
-			//if (status != MS::kSuccess) MGlobal::displayError("Error creating colorSet");
-			//sprintf_s( buffer, "polyColorPerVertex -rgb 0.5 0.0 0.0 %s",inputMesh.name().asChar());
-			//status = MGlobal::executeCommand("polyColorPerVertex -rgb 0.5 0.0 0.0 " + inputMesh.name());
-			//if (status != MS::kSuccess) MGlobal::displayError("Error coloring colorSet");
-
-			MString tmp;
-			tmp = "jMinus";
-			status = inputMesh.createColorSetDataMesh(tmp);
-			CHK("Error creating colorset.");
-
-			//sprintf_s( buffer, "polyColorPerVertex -rgb 0.5 0.0 0.0 %s",this->name().asChar());
-			//status = MGlobal::executeCommand(buffer);
-
-			//if (status != MS::kSuccess) MGlobal::displayError("Error coloring colorSet");
-			//sprintf_s( buffer, "setAttr \"%s.difs\" 0",inputMesh.name().asChar());
-			//cout << inputMesh.name() << std::endl;
-			//status = MGlobal::executeCommand("setAttr \"" + meshName + ".difs\" 0");
-
-
-			tmp = "jPlus";
-			status = inputMesh.createColorSetDataMesh(tmp);
-			CHK("Error creating colorset.");
-
-			tmp = "eMinus";
-			status = inputMesh.createColorSetDataMesh(tmp);
-			CHK("Error creating colorset.");
-
-			tmp = "ePlus";
-			status = inputMesh.createColorSetDataMesh(tmp);
-			CHK("Error creating colorset.");
-		}
-
-
-		if ((_initTangentSpace) && (deformSpace == 2)) {
-
-			//get the tangents, normas, uvs
-			_tangents.setLength(nPoints);
-			_normals.setLength(nPoints);
-			_binormals.setLength(nPoints);
-			_uList.setLength(nPoints);
-			_vList.setLength(nPoints);
-
-			MVector vec;
-			MIntArray vertexList;
-
-
-			for (int i=0; i<inputMesh.numPolygons(); i++)
-			{
-				vertexList.clear();
-				inputMesh.getPolygonVertices(i,vertexList);
-				for (unsigned int j=0; j<vertexList.length(); j++) {
-					inputMesh.getFaceVertexTangent (i, vertexList[j], vec);
-					_tangents[vertexList[j]] = vec.normal();
-					inputMesh.getFaceVertexNormal (i, vertexList[j], vec);
-					_normals[vertexList[j]] = vec.normal();
-					vec = _tangents[vertexList[j]]^_normals[vertexList[j]];
-					_binormals[vertexList[j]] = vec.normal();
-					inputMesh.getPolygonUV(i,j,_uList[vertexList[j]],_vList[vertexList[j]]);
-				}
-			}
-
-			_initTangentSpace = false;
-
-		} //if (_initTangentSpace)) && (deformSpace == 2)
-
-
-
-		if (_mesh_changed && doVertexColors)
-		{
-			_vertexNumberList.setLength(inputMesh.numFaceVertices());
-
-			MIntArray vertexList;
-			int colorIndex;
-
-			//create a list where [vertex per face number] = vertexNumber
-			for (int i=0; i<inputMesh.numPolygons(); i++)
-			{
-
-				// GET THE VERTEX INDICES FOR CURRENT FACE:
-				vertexList.clear();
-				inputMesh.getPolygonVertices(i,vertexList);
-
-				// ITERATE THROUGH EACH FACE VERTEX TO SEE IF EACH ONE BELONGS TO THE ORIGINAL VERTEX SELECTION:
-				for (unsigned j=0; j<vertexList.length(); j++)
+				if (_ocean)
 				{
-					inputMesh.getFaceVertexColorIndex(i,j,colorIndex);
-					_vertexNumberList[colorIndex] = vertexList[j];
-					//cout << "vertexId: " << vertexList[j] << " per Face Id " << colorIndex << std::endl;
+					delete _ocean;
 				}
+
+				if (_ocean_context)
+				{
+					delete _ocean_context;
+				}
+
+				_ocean = new drw::Ocean(resolution, resolution,
+					size/float(resolution), size/float(resolution),
+					windSpeed, shortestWave, 0.00001f, windDirection/180.0f * M_PI,
+					1.0f-dampReflections, windAlign, oceanDepth, seed);
+
+				_ocean_scale   = _ocean->get_height_normalize_factor();
+				_ocean_context = _ocean->new_context(true, choppiness>0, false, true);
+
+				_ocean_needs_rebuild = false;
+				// cout << "######### HotOcean, rebuilt ocean, norm_factor = " << _ocean_scale
+				//<<	"resolution = " << resolution
+				//	 <<	"windSpeed = " << windSpeed
+				//<< std::endl;
 			}
 
-		} // if (doVertexColors)
+			// sum up the waves at this timestep
+			_ocean->update( time, *_ocean_context, true, (choppiness>0), false, true,
+				_ocean_scale * waveHeight, choppiness);
+
+			unsigned int mIndex = plug.logicalIndex();
+			MObject thisNode = this->thisMObject();
+			MPlug inPlug(thisNode,input);
+			inPlug.selectAncestorLogicalIndex(mIndex,input);
+
+			MDataHandle hInput = block.inputValue(inPlug);
+			MDataHandle inputGeomDataH = hInput.child(inputGeom);
+			MDataHandle hOutput = block.outputValue(plug);
+			hOutput.copy(inputGeomDataH);
+
+			MFnMesh inputMesh( inputGeomDataH.asMesh() );
+
+			MMatrix worldSpace = inputGeomDataH.geometryTransformMatrix();
+			
+			MPointArray verts;
+			unsigned int nPoints = inputMesh.numVertices();
+			inputMesh.getPoints(verts);
 
 
-		_mesh_changed = false;
+			// some statics to speed things up
 
-		if (deformSpace == 2)
-		{
-#pragma omp parallel for
-			for (int i=0; i<nPoints; i++)
-			{
-				drw::EvalData evaldata;
-				// do the waves
-				//
-				if (interpolation)
-					_ocean_context->eval2_xz(oneOverGlobalScale *_uList[i], oneOverGlobalScale *_vList[i], evaldata);
-				else
-					_ocean_context->eval_xz(oneOverGlobalScale *_uList[i], oneOverGlobalScale *_vList[i], evaldata);
+			const float envGlobalScale = env * globalScale;
+			const float oneOverGlobalScale = 1.0/globalScale;
 
-				verts[i] += evaldata.disp[0] * envGlobalScale * _tangents[i];
-				verts[i] += evaldata.disp[1] * envGlobalScale * _normals[i];
-				verts[i] += evaldata.disp[2] * envGlobalScale * _binormals[i];
+			const MColor black = MColor(0.0, 0.0, 0.0);
+			MColorArray jMinus = MColorArray(nPoints, black);
+			MColorArray jPlus = MColorArray(nPoints, black);
+			MColorArray eMinus = MColorArray(nPoints, black);
+			MColorArray ePlus = MColorArray(nPoints, black);
 
-				if (doVertexColors)
-				{
-					jMinus.set(i,evaldata.Jminus,evaldata.Jminus,evaldata.Jminus);
-					jPlus.set(i,evaldata.Jplus,evaldata.Jplus,evaldata.Jplus);
-					eMinus.set(i,evaldata.Eminus[0],evaldata.Eminus[1],evaldata.Eminus[2]);
-					ePlus.set(i,evaldata.Eplus[0],evaldata.Eplus[1],evaldata.Eplus[2]);
-				}
-
-
-			}//for
-
-			//for (int i = 0; i < vertexNumberList.length(); i++)
-			//cout << "i: " << i << " colorIndex " << vertexNumberList[i] << std::endl;
-
-
-
-			//if (setExists == 0)
-			//{
-
-			//}
-
-			/*inputMesh.getColorSetNames(existingColorSets);
-			for (int i=0; i<existingColorSets.length(); i++)
-			{
-				cout << "Found Set: " << existingColorSets[i].asChar() << std::endl;
-			}*/
-			//status = inputMesh.setCurrentColorSetName(setName);
-			//CHK("Error switching to colorset.");
-
-			//status = inputMesh.setFaceColors(jMinus, vertexNumberList);
-			//cout << "ColorNum " << jMinus.length() << " IndexNum "<< vertexNumberList.length() <<  std::endl;
-			//cout << "Current Set " << inputMesh.currentColorSetName().asChar() <<  std::endl;
-			//status = inputMesh.setFaceColors(jMinus, vertexNumberList);
-
-
-
-		}
-		else //object or worldspace
-		{
-#pragma omp parallel for
-			for (int i=0; i<nPoints; i++)
-			{
-				drw::EvalData evaldata;
-				MPoint pt = verts[i];
-
-				if (deformSpace == 0)
-					pt *= worldSpace;
-
-				// do the waves
-				//
-				if (interpolation)
-					_ocean_context->eval2_xz(oneOverGlobalScale *pt.x,oneOverGlobalScale *pt.z, evaldata);
-				else
-					_ocean_context->eval_xz(oneOverGlobalScale *pt.x,oneOverGlobalScale *pt.z, evaldata);
-
-				pt.x += evaldata.disp[0] * envGlobalScale;
-				pt.y += evaldata.disp[1] * envGlobalScale;
-				pt.z += evaldata.disp[2] * envGlobalScale;
-
-				if (doVertexColors)
-				{
-					jMinus.set(i,evaldata.Jminus,evaldata.Jminus,evaldata.Jminus);
-					jPlus.set(i,evaldata.Jplus,evaldata.Jplus,evaldata.Jplus);
-					eMinus.set(i,evaldata.Eminus[0],evaldata.Eminus[1],evaldata.Eminus[2]);
-					ePlus.set(i,evaldata.Eplus[0],evaldata.Eplus[1],evaldata.Eplus[2]);
-					//cout << "Eminus " << evaldata.Eminus[0] << std::endl;
-				}
-
-
-				if (deformSpace == 0)
-					pt *= worldSpace.inverse();
-
-				verts[i] = pt;
-
-			}
-		}
-
-		// write values back onto output using fast set method on iterator
-		inputMesh.setPoints(verts);
-		/*for (int i = 0; i < _vertexNumberList.length(); i++)
-					cout << "i: " << i << " colorIndex " << _vertexNumberList[i] << std::endl;*/
-
-		if (doVertexColors)
-		{
-			//status = inputMesh.createColorSetDataMesh(setName);
-			//CHK("Error creating colorset.");
+			//bool setExists = 0;
 			//MStringArray existingColorSets;
 			//inputMesh.getColorSetNames(existingColorSets);
-			////setExists = 0;
 			//for (int i=0; i<existingColorSets.length(); i++)
 			//{
 			//	cout << "Found Set: " << existingColorSets[i].asChar() << std::endl;
-
+			//	setExists = 1;
 			//}
-			MString setName;
 
-			setName = MString("jMinus");
-			status = inputMesh.clearColors(&setName);
-			CHK("Error clearing colors.");
-			status = inputMesh.setColors(jMinus,&setName);
-			CHK("Error setting colors.");
-			status = inputMesh.assignColors(_vertexNumberList,&setName);
-			CHK("Error assigning colors.");
 
-			setName = MString("jPlus");
-			status = inputMesh.clearColors(&setName);
-			CHK("Error clearing colors.");
-			status = inputMesh.setColors(jPlus,&setName);
-			CHK("Error setting colors.");
-			status = inputMesh.assignColors(_vertexNumberList,&setName);
-			CHK("Error assigning colors.");
+			if (doVertexColors)
+			{
+				//Create one set per mel
+				char buffer[512];
+				//MString meshName = inputMesh.name();
+				//cout << inputMesh.name().asChar() << "  " << std::endl;
+				//sprintf_s( buffer, "polyColorSet -create -colorSet \"jMinus1\" %s",inputMesh.name().asChar());
+				//status = MGlobal::executeCommand(buffer);
+				//if (status != MS::kSuccess) MGlobal::displayError("Error creating colorSet");
+				//sprintf_s( buffer, "polyColorPerVertex -rgb 0.5 0.0 0.0 %s",inputMesh.name().asChar());
+				//status = MGlobal::executeCommand("polyColorPerVertex -rgb 0.5 0.0 0.0 " + inputMesh.name());
+				//if (status != MS::kSuccess) MGlobal::displayError("Error coloring colorSet");
 
-			setName = MString("eMinus");
-			status = inputMesh.clearColors(&setName);
-			CHK("Error clearing colors.");
-			status = inputMesh.setColors(eMinus,&setName);
-			CHK("Error setting colors.");
-			status = inputMesh.assignColors(_vertexNumberList,&setName);
-			CHK("Error assigning colors.");
+				MString tmp;
+				tmp = "jMinus";
+				status = inputMesh.createColorSetDataMesh(tmp);
+				CHK("Error creating colorset.");
 
-			setName = MString("ePlus");
-			status = inputMesh.clearColors(&setName);
-			CHK("Error clearing colors.");
-			status = inputMesh.setColors(ePlus,&setName);
-			CHK("Error setting colors.");
-			status = inputMesh.assignColors(_vertexNumberList,&setName);
-			CHK("Error assigning colors.");
+				//sprintf_s( buffer, "polyColorPerVertex -rgb 0.5 0.0 0.0 %s",this->name().asChar());
+				//status = MGlobal::executeCommand(buffer);
 
-			//char buffer[512];
-			//sprintf_s( buffer, "polyOptions -colorShadedDisplay true %s",inputMesh.name().asChar());
-			//status = MGlobal::executeCommand(buffer);
-			//if (status != MS::kSuccess) MGlobal::displayError("Error displaying colors");
+				//if (status != MS::kSuccess) MGlobal::displayError("Error coloring colorSet");
+				//sprintf_s( buffer, "setAttr \"%s.difs\" 0",inputMesh.name().asChar());
+				//cout << inputMesh.name() << std::endl;
+				//status = MGlobal::executeCommand("setAttr \"" + meshName + ".difs\" 0");
 
-			//inputMesh.cleanupEdgeSmoothing();
-			//status = inputMesh.updateSurface();
-			//CHK("Error redrawing.");
-			//status = inputMesh.setDisplayColors(true);
-			//CHK("Error displaying colors.");
-			//MColor temp = MColor(1.0f,0.0f,0.0f);
-			//inputMesh.setFaceColor(temp,0);
-			//status = inputMesh.setFaceColors(ePlus,_vertexNumberList);
-			//CHK("test.");
+
+				tmp = "jPlus";
+				status = inputMesh.createColorSetDataMesh(tmp);
+				CHK("Error creating colorset.");
+
+				tmp = "eMinus";
+				status = inputMesh.createColorSetDataMesh(tmp);
+				CHK("Error creating colorset.");
+
+				tmp = "ePlus";
+				status = inputMesh.createColorSetDataMesh(tmp);
+				CHK("Error creating colorset.");
+			}
+
+
+			if ((_initTangentSpace) && (deformSpace == 2)) {
+
+				//get the tangents, normas, uvs
+				_tangents.setLength(nPoints);
+				_normals.setLength(nPoints);
+				_binormals.setLength(nPoints);
+				_uList.setLength(nPoints);
+				_vList.setLength(nPoints);
+
+				MVector vec;
+				MIntArray vertexList;
+
+
+				for (int i=0; i<inputMesh.numPolygons(); i++)
+				{
+					vertexList.clear();
+					inputMesh.getPolygonVertices(i,vertexList);
+					for (unsigned int j=0; j<vertexList.length(); j++) {
+						inputMesh.getFaceVertexTangent (i, vertexList[j], vec);
+						_tangents[vertexList[j]] = vec.normal();
+						inputMesh.getFaceVertexNormal (i, vertexList[j], vec);
+						_normals[vertexList[j]] = vec.normal();
+						vec = _tangents[vertexList[j]]^_normals[vertexList[j]];
+						_binormals[vertexList[j]] = vec.normal();
+						inputMesh.getPolygonUV(i,j,_uList[vertexList[j]],_vList[vertexList[j]]);
+					}
+				}
+
+				_initTangentSpace = false;
+
+			} //if (_initTangentSpace)) && (deformSpace == 2)
+
+
+
+			if (_mesh_changed && doVertexColors)
+			{
+				_vertexNumberList.setLength(inputMesh.numFaceVertices());
+
+				MIntArray vertexList;
+				int colorIndex;
+
+				//create a list where [vertex per face number] = vertexNumber
+				for (int i=0; i<inputMesh.numPolygons(); i++)
+				{
+
+					// GET THE VERTEX INDICES FOR CURRENT FACE:
+					vertexList.clear();
+					inputMesh.getPolygonVertices(i,vertexList);
+
+					// ITERATE THROUGH EACH FACE VERTEX TO SEE IF EACH ONE BELONGS TO THE ORIGINAL VERTEX SELECTION:
+					for (unsigned j=0; j<vertexList.length(); j++)
+					{
+						inputMesh.getFaceVertexColorIndex(i,j,colorIndex);
+						_vertexNumberList[colorIndex] = vertexList[j];
+						//cout << "vertexId: " << vertexList[j] << " per Face Id " << colorIndex << std::endl;
+					}
+				}
+
+			} // if (doVertexColors)
+
+
+			_mesh_changed = false;
+
+			if (deformSpace == 2)
+			{
+#pragma omp parallel for
+				for (int i=0; i<nPoints; ++i)
+				{
+					drw::EvalData evaldata;
+					// do the waves
+					//
+					if (interpolation)
+						_ocean_context->eval2_xz(oneOverGlobalScale *_uList[i], oneOverGlobalScale *_vList[i], evaldata);
+					else
+						_ocean_context->eval_xz(oneOverGlobalScale *_uList[i], oneOverGlobalScale *_vList[i], evaldata);
+
+					verts[i] += evaldata.disp[0] * envGlobalScale * _tangents[i];
+					verts[i] += evaldata.disp[1] * envGlobalScale * _normals[i];
+					verts[i] += evaldata.disp[2] * envGlobalScale * _binormals[i];
+
+					if (doVertexColors)
+					{
+						jMinus.set(i,evaldata.Jminus,evaldata.Jminus,evaldata.Jminus);
+						jPlus.set(i,evaldata.Jplus,evaldata.Jplus,evaldata.Jplus);
+						eMinus.set(i,evaldata.Eminus[0],evaldata.Eminus[1],evaldata.Eminus[2]);
+						ePlus.set(i,evaldata.Eplus[0],evaldata.Eplus[1],evaldata.Eplus[2]);
+					}
+
+
+				} // for
+
+				//for (int i = 0; i < vertexNumberList.length(); i++)
+				//cout << "i: " << i << " colorIndex " << vertexNumberList[i] << std::endl;
+
+
+
+				//if (setExists == 0)
+				//{
+
+				//}
+
+				/*inputMesh.getColorSetNames(existingColorSets);
+				for (int i=0; i<existingColorSets.length(); i++)
+				{
+					cout << "Found Set: " << existingColorSets[i].asChar() << std::endl;
+				}*/
+				//status = inputMesh.setCurrentColorSetName(setName);
+				//CHK("Error switching to colorset.");
+
+				//status = inputMesh.setFaceColors(jMinus, vertexNumberList);
+				//cout << "ColorNum " << jMinus.length() << " IndexNum "<< vertexNumberList.length() <<  std::endl;
+				//cout << "Current Set " << inputMesh.currentColorSetName().asChar() <<  std::endl;
+				//status = inputMesh.setFaceColors(jMinus, vertexNumberList);
+
+
+
+			}
+			else //object or worldspace
+			{
+#pragma omp parallel for
+				for (int i=0; i<nPoints; i++)
+				{
+					drw::EvalData evaldata;
+					MPoint pt = verts[i];
+
+					if (deformSpace == 0)
+						pt *= worldSpace;
+
+					// do the waves
+					//
+					if (interpolation)
+						_ocean_context->eval2_xz(oneOverGlobalScale *pt.x,oneOverGlobalScale *pt.z, evaldata);
+					else
+						_ocean_context->eval_xz(oneOverGlobalScale *pt.x,oneOverGlobalScale *pt.z, evaldata);
+
+					pt.x += evaldata.disp[0] * envGlobalScale;
+					pt.y += evaldata.disp[1] * envGlobalScale;
+					pt.z += evaldata.disp[2] * envGlobalScale;
+
+					if (doVertexColors)
+					{
+						jMinus.set(i,evaldata.Jminus,evaldata.Jminus,evaldata.Jminus);
+						jPlus.set(i,evaldata.Jplus,evaldata.Jplus,evaldata.Jplus);
+						eMinus.set(i,evaldata.Eminus[0],evaldata.Eminus[1],evaldata.Eminus[2]);
+						ePlus.set(i,evaldata.Eplus[0],evaldata.Eplus[1],evaldata.Eplus[2]);
+						//cout << "Eminus " << evaldata.Eminus[0] << std::endl;
+					}
+
+
+					if (deformSpace == 0)
+						pt *= worldSpace.inverse();
+
+					verts[i] = pt;
+
+				}
+			}
+
+			// write values back onto output using fast set method on iterator
+			inputMesh.setPoints(verts);
+			/*for (int i = 0; i < _vertexNumberList.length(); i++)
+						cout << "i: " << i << " colorIndex " << _vertexNumberList[i] << std::endl;*/
+
+			if (doVertexColors)
+			{
+				//status = inputMesh.createColorSetDataMesh(setName);
+				//CHK("Error creating colorset.");
+				//MStringArray existingColorSets;
+				//inputMesh.getColorSetNames(existingColorSets);
+				////setExists = 0;
+				//for (int i=0; i<existingColorSets.length(); i++)
+				//{
+				//	cout << "Found Set: " << existingColorSets[i].asChar() << std::endl;
+
+				//}
+				MString setName;
+
+				setName = MString("jMinus");
+				status = inputMesh.clearColors(&setName);
+				CHK("Error clearing colors.");
+				status = inputMesh.setColors(jMinus,&setName);
+				CHK("Error setting colors.");
+				status = inputMesh.assignColors(_vertexNumberList,&setName);
+				CHK("Error assigning colors.");
+
+				setName = MString("jPlus");
+				status = inputMesh.clearColors(&setName);
+				CHK("Error clearing colors.");
+				status = inputMesh.setColors(jPlus,&setName);
+				CHK("Error setting colors.");
+				status = inputMesh.assignColors(_vertexNumberList,&setName);
+				CHK("Error assigning colors.");
+
+				setName = MString("eMinus");
+				status = inputMesh.clearColors(&setName);
+				CHK("Error clearing colors.");
+				status = inputMesh.setColors(eMinus,&setName);
+				CHK("Error setting colors.");
+				status = inputMesh.assignColors(_vertexNumberList,&setName);
+				CHK("Error assigning colors.");
+
+				setName = MString("ePlus");
+				status = inputMesh.clearColors(&setName);
+				CHK("Error clearing colors.");
+				status = inputMesh.setColors(ePlus,&setName);
+				CHK("Error setting colors.");
+				status = inputMesh.assignColors(_vertexNumberList,&setName);
+				CHK("Error assigning colors.");
+
+				//char buffer[512];
+				//sprintf_s( buffer, "polyOptions -colorShadedDisplay true %s",inputMesh.name().asChar());
+				//status = MGlobal::executeCommand(buffer);
+				//if (status != MS::kSuccess) MGlobal::displayError("Error displaying colors");
+
+				//inputMesh.cleanupEdgeSmoothing();
+				//status = inputMesh.updateSurface();
+				//CHK("Error redrawing.");
+				//status = inputMesh.setDisplayColors(true);
+				//CHK("Error displaying colors.");
+				//MColor temp = MColor(1.0f,0.0f,0.0f);
+				//inputMesh.setFaceColor(temp,0);
+				//status = inputMesh.setFaceColors(ePlus,_vertexNumberList);
+				//CHK("test.");
+			}
 		}
 	}
 
+	// error handling
+	//
+	catch( char const *e )
+	{
+		MGlobal::displayWarning(FN_dnode+MString(e));
+	}
+
+	catch( std::runtime_error & e )
+	{
+		MGlobal::displayWarning(FN_dnode+MString(e.what()));
+	}
+
+	catch(...)
+	{
+		MGlobal::displayError(FN_dnode+"unknown error occurred");
+		throw;
+	}
 
 	return status;
 #undef CHK
