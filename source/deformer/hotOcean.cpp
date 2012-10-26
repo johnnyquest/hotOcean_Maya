@@ -1,26 +1,27 @@
 // -*- C++ -*-
-/***************************************************************************
- * hotOcean.cpp      a maya deformer to displace a surface using
- * the Houdini Ocean Toolkit code
- *
- * implementation Nico Rehberg <mail@nico-rehberg.de>
- *
- *
- * The Houdini Ocean Toolkit is copyrighted by Drew Whitehouse
- * see http://odforce.net/wiki/index.php/HoudiniOceanToolkit
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- *
- ***************************************************************************/
+/**
+		@file		hotOcean.cpp
+		@since		2012-10-26
+
+		@author		Nico Rehberg, Imre Tuske, Szabolcs Horvatth
+
+		@brief		Maya deformer to displace a surface using Houdini Ocean Toolkit (implementation).
+
+		Implementation: Nico Rehberg <mail@nico-rehberg.de>
+
+		The Houdini Ocean Toolkit is copyrighted by Drew Whitehouse
+		see http://odforce.net/wiki/index.php/HoudiniOceanToolkit
+
+		This program is free software; you can redistribute it and/or
+		modify it under the terms of the GNU General Public License
+		as published by the Free Software Foundation; either version 2
+		of the License, or (at your option) any later version.
+
+		This program is distributed in the hope that it will be useful,
+		but WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+		GNU General Public License for more details.
+*/
 
 #include "hotOcean.h"
 
@@ -83,14 +84,10 @@ void* hotOceanDeformer::creator()
 
 
 
+/**	Attribute initialization.
+*/
 MStatus hotOceanDeformer::initialize()
-//
-//      Description:
-//              initialize the attributes
-//
 {
-	// local attribute initialization
-	//
 	MFnNumericAttribute nAttr;
 	globalScale=nAttr.create( "globalScale", "scale", MFnNumericData::kDouble  );
 	nAttr.setDefault(1.0);
@@ -208,8 +205,6 @@ MStatus hotOceanDeformer::initialize()
 	nAttr.setChannelBox(true);
 	addAttribute( vertexColor );
 
-	// affects
-	//
 	attributeAffects( globalScale, outputGeom );
 	attributeAffects( resolution, outputGeom );
 	attributeAffects( size, outputGeom );
@@ -240,17 +235,22 @@ MStatus hotOceanDeformer::setDependentsDirty(
 		//cout << "######### HotOcean need rebuild because of = " << plugBeingDirtied.partialName() << std::endl;
 		_ocean_needs_rebuild = true;
 	}
+
 	// in geo changed ip[0].ig
+
 	if (plugBeingDirtied.partialName() == "ip[0].ig") {
 		_mesh_changed = true;
 		_initTangentSpace = true;
 	}
+
 	if ( plugBeingDirtied.partialName() == "vertexColor" ) {
 		_mesh_changed = true;
 	}
+
 	if ( plugBeingDirtied.partialName() == "space" ) {
 		_initTangentSpace = true;
 	}
+
 	return( MS::kSuccess );
 }
 
@@ -382,6 +382,7 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 		MObject thisNode = this->thisMObject();
 		MPlug inPlug(thisNode,input);
 		inPlug.selectAncestorLogicalIndex(mIndex,input);
+
 		MDataHandle hInput = block.inputValue(inPlug);
 		MDataHandle inputGeomDataH = hInput.child(inputGeom);
 		MDataHandle hOutput = block.outputValue(plug);
@@ -689,6 +690,8 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 
 
 
+/**	Registration of deformer node.
+*/
 MStatus initializePlugin( MObject obj )
 {
 	MStatus result;
@@ -701,6 +704,8 @@ MStatus initializePlugin( MObject obj )
 
 
 
+/**	De-registration of deformer node.
+*/
 MStatus uninitializePlugin( MObject obj)
 {
 	MStatus result;

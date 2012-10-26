@@ -1,31 +1,36 @@
 // -*- C++ -*-
-/***************************************************************************
- * hotOcean.cpp      a maya deformer to displace a surface using
- * the Houdini Ocean Toolkit code
- *
- * implementation Nico Rehberg <mail@nico-rehberg.de>
- *
- *
- * The Houdini Ocean Toolkit is copyrighted by Drew Whitehouse
- * see http://odforce.net/wiki/index.php/HoudiniOceanToolkit
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- *
- ***************************************************************************/
+/**
+		@file		hotOcean.h
+		@since		2012-10-26
 
+		@author		Nico Rehberg, Imre Tuske, Szabolcs Horvatth
+
+		@brief		Maya deformer to displace a surface using Houdini Ocean Toolkit (headers).
+
+		implementation Nico Rehberg <mail@nico-rehberg.de>
+
+		The Houdini Ocean Toolkit is copyrighted by Drew Whitehouse
+		see http://odforce.net/wiki/index.php/HoudiniOceanToolkit
+
+		This program is free software; you can redistribute it and/or
+		modify it under the terms of the GNU General Public License
+		as published by the Free Software Foundation; either version 2
+		of the License, or (at your option) any later version.
+
+		This program is distributed in the hope that it will be useful,
+		but WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+		GNU General Public License for more details.
+
+*/
+
+#include "Ocean.h"
 
 #include <string.h>
-#include <maya/MIOStream.h>
 #include <math.h>
+#include <omp.h>
+
+#include <maya/MIOStream.h>
 
 #include <maya/MPxDeformerNode.h>
 #include <maya/MItGeometry.h>
@@ -45,9 +50,6 @@
 #include <maya/MPoint.h>
 #include <maya/MMatrix.h>
 
-#include "Ocean.h"
-
-#include <omp.h>
 #include <maya/MPointArray.h>
 #include <maya/MVectorArray.h>
 #include <maya/MFloatArray.h>
@@ -72,22 +74,20 @@ public:
 */
 
 public:
-	// attributes
-	//
 	static  MObject globalScale;
-	static  MObject resolution;		//grid aufloesung
-	static  MObject size;			// The grid mentiond above is computed for and applied to the input geometry in tiles of this size.
-	static  MObject windSpeed;		// Wind Speed - Affects the shape of the waves, "Windspeed (m/s)"
+	static  MObject resolution;
+	static  MObject size;
+	static  MObject windSpeed;
 	static  MObject waveHeight;
-	static  MObject shortestWave;		// Shortest Wavelength(m)
+	static  MObject shortestWave;
 	static  MObject choppiness;
-	static  MObject windDirection;		// Wind direction in degrees
-	static  MObject dampReflections;	// Damp reflections - In a 'fully developed' ocean you will have waves travelling in both the forward and backwards directions. This parameter damps out the negative direcion waves.
-	static  MObject windAlign;		// Wind Alignment - Controls how closely the waves travel in the direction of the wind.
-	static  MObject oceanDepth;		// Ocean Depth - Affects the spectrum of waves generated. Visually in doesnt seem to have that great an influence.
+	static  MObject windDirection;
+	static  MObject dampReflections;
+	static  MObject windAlign;
+	static  MObject oceanDepth;
 	static  MObject time;
-	static  MObject seed;			// Seed - Seeds the random number generator.
-	static  MObject interpolation;		// interpolation: linear or smooth
+	static  MObject seed;
+	static  MObject interpolation;
 	static  MObject deformSpace;
 	static  MObject vertexColor;
 	static  MTypeId id;
