@@ -36,7 +36,7 @@ MObject		hotOceanDeformer::globalScale;
 MObject		hotOceanDeformer::resolution;
 MObject		hotOceanDeformer::size;
 MObject		hotOceanDeformer::windSpeed;
-MObject		hotOceanDeformer::waveHeigth;
+MObject		hotOceanDeformer::waveHeight;
 MObject		hotOceanDeformer::shortestWave;
 MObject		hotOceanDeformer::choppiness;
 MObject		hotOceanDeformer::windDirection;
@@ -123,12 +123,12 @@ MStatus hotOceanDeformer::initialize()
 	nAttr.setSoftMax(100);
 	addAttribute( windSpeed );
 
-	waveHeigth = nAttr.create( "waveHeigth", "wh", MFnNumericData::kDouble );
+	waveHeight = nAttr.create( "waveHeight", "wh", MFnNumericData::kDouble );
 	nAttr.setDefault(2.0);
 	nAttr.setKeyable(true);
 	nAttr.setMin(0.01);
 	nAttr.setSoftMax(20);
-	addAttribute( waveHeigth );
+	addAttribute( waveHeight );
 
 	shortestWave = nAttr.create( "shortestWave", "sw", MFnNumericData::kDouble );
 	nAttr.setDefault(0.01);
@@ -141,7 +141,7 @@ MStatus hotOceanDeformer::initialize()
 	nAttr.setDefault(0.7);
 	nAttr.setKeyable(true);
 	nAttr.setMin(0.0);
-	nAttr.setMax(1.0);
+	nAttr.setSoftMax(4.0);
 	addAttribute( choppiness );
 
 	windDirection = nAttr.create( "windDirection", "dir", MFnNumericData::kDouble );
@@ -214,7 +214,7 @@ MStatus hotOceanDeformer::initialize()
 	attributeAffects( resolution, outputGeom );
 	attributeAffects( size, outputGeom );
 	attributeAffects( windSpeed, outputGeom );
-	attributeAffects( waveHeigth, outputGeom );
+	attributeAffects( waveHeight, outputGeom );
 	attributeAffects( shortestWave, outputGeom );
 	attributeAffects( choppiness, outputGeom );
 	attributeAffects( windDirection, outputGeom );
@@ -291,9 +291,9 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 		McheckErr(status, "Error getting windSpeed data handle\n");
 		double windSpeed = windSpeedData.asDouble();
 
-		MDataHandle waveHeigthData = block.inputValue(waveHeigth,&status);
-		McheckErr(status, "Error getting waveHeigth data handle\n");
-		double waveHeigth = waveHeigthData.asDouble();
+		MDataHandle waveHeightData = block.inputValue(waveHeight, &status);
+		McheckErr(status, "Error getting waveHeight data handle\n");
+		double waveHeight = waveHeightData.asDouble();
 
 		MDataHandle shortestWaveData = block.inputValue(shortestWave,&status);
 		McheckErr(status, "Error getting shortestWave data handle\n");
@@ -376,7 +376,7 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 
 		// sum up the waves at this timestep
 		_ocean->update( time, *_ocean_context, true, (choppiness>0), false, true,
-			_ocean_scale * waveHeigth, choppiness);
+			_ocean_scale * waveHeight, choppiness);
 
 		unsigned int mIndex = plug.logicalIndex();
 		MObject thisNode = this->thisMObject();

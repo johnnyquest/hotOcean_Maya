@@ -78,7 +78,7 @@ public:
 	static  MObject resolution;		//grid aufloesung
 	static  MObject size;			// The grid mentiond above is computed for and applied to the input geometry in tiles of this size.
 	static  MObject windSpeed;		// Wind Speed - Affects the shape of the waves, "Windspeed (m/s)"
-	static  MObject waveHeigth;
+	static  MObject waveHeight;
 	static  MObject shortestWave;		// Shortest Wavelength(m)
 	static  MObject choppiness;
 	static  MObject windDirection;		// Wind direction in degrees
