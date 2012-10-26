@@ -386,7 +386,9 @@ MStatus hotOceanDeformer::compute( const MPlug& plug, MDataBlock& block )
 		MDataHandle inputGeomDataH = hInput.child(inputGeom);
 		MDataHandle hOutput = block.outputValue(plug);
 		hOutput.copy(inputGeomDataH);
-		MFnMesh inputMesh = inputGeomDataH.asMesh();
+
+		MFnMesh inputMesh( inputGeomDataH.asMesh() );
+
 		MMatrix worldSpace;
 		worldSpace = inputGeomDataH.geometryTransformMatrix();
 		MPointArray verts;
