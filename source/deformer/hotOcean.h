@@ -7,7 +7,7 @@
 
 		@brief		Maya deformer to displace a surface using Houdini Ocean Toolkit (headers).
 
-		implementation Nico Rehberg <mail@nico-rehberg.de>
+		Implementation: Nico Rehberg <mail@nico-rehberg.de>
 
 		The Houdini Ocean Toolkit is copyrighted by Drew Whitehouse
 		see http://odforce.net/wiki/index.php/HoudiniOceanToolkit
@@ -63,7 +63,7 @@ public:
 	hotOceanDeformer();
 	virtual			~hotOceanDeformer();
 
-	static void *		creator();
+	static void *		creator() { return new hotOceanDeformer(); }
 	static MStatus		initialize();
 
 	virtual MStatus		setDependentsDirty( const MPlug &, MPlugArray & );
@@ -74,23 +74,24 @@ public:
 */
 
 public:
-	static  MObject globalScale;
-	static  MObject resolution;
-	static  MObject size;
-	static  MObject windSpeed;
-	static  MObject waveHeight;
-	static  MObject shortestWave;
-	static  MObject choppiness;
-	static  MObject windDirection;
-	static  MObject dampReflections;
-	static  MObject windAlign;
-	static  MObject oceanDepth;
-	static  MObject time;
-	static  MObject seed;
-	static  MObject interpolation;
-	static  MObject deformSpace;
-	static  MObject vertexColor;
-	static  MTypeId id;
+	static MObject globalScale;
+	static MObject resolution;
+	static MObject size;
+	static MObject windSpeed;
+	static MObject waveHeight;
+	static MObject shortestWave;
+	static MObject choppiness;
+	static MObject windDirection;
+	static MObject dampReflections;
+	static MObject windAlign;
+	static MObject oceanDepth;
+	static MObject time;
+	static MObject seed;
+	static MObject interpolation;
+	static MObject deformSpace;
+	static MObject vertexColor;
+
+	static MTypeId id;
 
 protected:
 	// This is where all the wave action takes place

@@ -75,13 +75,6 @@ hotOceanDeformer::~hotOceanDeformer()
 
 
 
-void* hotOceanDeformer::creator()
-{
-	return new hotOceanDeformer();
-}
-
-
-
 /**	Attribute initialization.
 */
 MStatus hotOceanDeformer::initialize()
@@ -249,7 +242,7 @@ MStatus hotOceanDeformer::setDependentsDirty(
 		_initTangentSpace = true;
 	}
 
-	return( MS::kSuccess );
+	return MS::kSuccess;
 }
 
 
@@ -269,7 +262,7 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 {
 #define CHK(msg) if ( MS::kSuccess!=status ) { throw(msg); }
 
-	MStatus status = MS::kSuccess;
+	MStatus			status;
 
 	MFnDependencyNode	this_dnode(thisMObject(), &status);
 	MString			dnode_name = this_dnode.name(),
@@ -344,7 +337,10 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 
 			MDataHandle vertexColorsData = block.inputValue(vertexColor,&status);
 			CHK("Error getting do Vertex Colors data handle");
-			bool doVertexColors = false; //vertexColorsData.asBool();
+			bool doVertexColors = vertexColorsData.asBool();
+
+
+			bool do_jacobian = true || doVertexColors; // for vertex colors
 
 
 			// determine the envelope (this is a global scale factor)
@@ -353,8 +349,10 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 			CHK("Error getting envelope data handle");
 			float env = envData.asFloat();
 
+
 			// if we need to (re)initialize the ocean, do this
-			if (!_ocean || _ocean_needs_rebuild)
+			//
+			if ( !_ocean || _ocean_needs_rebuild )
 			{
 				if (_ocean)
 				{
@@ -372,17 +370,15 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 					1.0f-dampReflections, windAlign, oceanDepth, seed);
 
 				_ocean_scale   = _ocean->get_height_normalize_factor();
-				_ocean_context = _ocean->new_context(true, choppiness>0, false, true);
+				_ocean_context = _ocean->new_context(true, choppiness>0, false, do_jacobian);
 
 				_ocean_needs_rebuild = false;
-				// cout << "######### HotOcean, rebuilt ocean, norm_factor = " << _ocean_scale
-				//<<	"resolution = " << resolution
-				//	 <<	"windSpeed = " << windSpeed
-				//<< std::endl;
 			}
 
+
 			// sum up the waves at this timestep
-			_ocean->update( time, *_ocean_context, true, (choppiness>0), false, true,
+			//
+			_ocean->update( time, *_ocean_context, true, (choppiness>0), false, do_jacobian,
 				_ocean_scale * waveHeight, choppiness);
 
 			unsigned int mIndex = plug.logicalIndex();
@@ -405,25 +401,17 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 
 
 			// some statics to speed things up
-
+			//
 			const float envGlobalScale = env * globalScale;
 			const float oneOverGlobalScale = 1.0/globalScale;
 
-			const MColor black = MColor(0.0, 0.0, 0.0);
-			MColorArray jMinus = MColorArray(nPoints, black);
-			MColorArray jPlus = MColorArray(nPoints, black);
-			MColorArray eMinus = MColorArray(nPoints, black);
-			MColorArray ePlus = MColorArray(nPoints, black);
+			const MColor black(0.0, 0.0, 0.0);
 
-			//bool setExists = 0;
-			//MStringArray existingColorSets;
-			//inputMesh.getColorSetNames(existingColorSets);
-			//for (int i=0; i<existingColorSets.length(); i++)
-			//{
-			//	cout << "Found Set: " << existingColorSets[i].asChar() << std::endl;
-			//	setExists = 1;
-			//}
-
+			MColorArray
+				jMinus = MColorArray(nPoints, black),
+				jPlus = MColorArray(nPoints, black),
+				eMinus = MColorArray(nPoints, black),
+				ePlus = MColorArray(nPoints, black);
 
 			if (doVertexColors)
 			{
@@ -438,10 +426,10 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 				//status = MGlobal::executeCommand("polyColorPerVertex -rgb 0.5 0.0 0.0 " + inputMesh.name());
 				//if (status != MS::kSuccess) MGlobal::displayError("Error coloring colorSet");
 
-				MString tmp;
-				tmp = "jMinus";
-				status = inputMesh.createColorSetDataMesh(tmp);
-				CHK("Error creating colorset.");
+				MString cset_name;
+				cset_name = "jMinus";
+				status = inputMesh.createColorSetDataMesh(cset_name);
+				CHK("Error creating jMinus colorset.");
 
 				//sprintf_s( buffer, "polyColorPerVertex -rgb 0.5 0.0 0.0 %s",this->name().asChar());
 				//status = MGlobal::executeCommand(buffer);
@@ -452,22 +440,22 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 				//status = MGlobal::executeCommand("setAttr \"" + meshName + ".difs\" 0");
 
 
-				tmp = "jPlus";
-				status = inputMesh.createColorSetDataMesh(tmp);
-				CHK("Error creating colorset.");
+				cset_name = "jPlus";
+				status = inputMesh.createColorSetDataMesh(cset_name);
+				CHK("Error creating jPlus colorset.");
 
-				tmp = "eMinus";
-				status = inputMesh.createColorSetDataMesh(tmp);
-				CHK("Error creating colorset.");
+				cset_name = "eMinus";
+				status = inputMesh.createColorSetDataMesh(cset_name);
+				CHK("Error creating eMinus colorset.");
 
-				tmp = "ePlus";
-				status = inputMesh.createColorSetDataMesh(tmp);
-				CHK("Error creating colorset.");
+				cset_name = "ePlus";
+				status = inputMesh.createColorSetDataMesh(cset_name);
+				CHK("Error creating ePlus colorset.");
 			}
 
 
-			if ((_initTangentSpace) && (deformSpace == 2)) {
-
+			if ((_initTangentSpace) && (deformSpace == 2))
+			{
 				//get the tangents, normas, uvs
 				_tangents.setLength(nPoints);
 				_normals.setLength(nPoints);
@@ -477,7 +465,6 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 
 				MVector vec;
 				MIntArray vertexList;
-
 
 				for (int i=0; i<inputMesh.numPolygons(); i++)
 				{
@@ -532,9 +519,10 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 			if (deformSpace == 2)
 			{
 #pragma omp parallel for
-				for (int i=0; i<nPoints; ++i)
+				for(int i=0; i<nPoints; ++i)
 				{
 					drw::EvalData evaldata;
+
 					// do the waves
 					//
 					if (interpolation)
@@ -583,10 +571,10 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 
 
 			}
-			else //object or worldspace
+			else // object or worldspace
 			{
 #pragma omp parallel for
-				for (int i=0; i<nPoints; i++)
+				for (int i=0; i<nPoints; ++i)
 				{
 					drw::EvalData evaldata;
 					MPoint pt = verts[i];
@@ -718,25 +706,27 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 
 /**	Registration of deformer node.
 */
-MStatus initializePlugin( MObject obj )
+MStatus initializePlugin(MObject obj)
 {
-	MStatus result;
-	MFnPlugin plugin( obj, "Nico Rehberg" , "1.1", "Any");
-	result = plugin.registerNode( "hotOceanDeformer", hotOceanDeformer::id, hotOceanDeformer::creator,
-		hotOceanDeformer::initialize, MPxNode::kDeformerNode );
+	MStatus s;
+	MFnPlugin plugin(obj, "Nico Rehberg" , "1.1", "Any");
 
-	return result;
+	s = plugin.registerNode("hotOceanDeformer",
+		hotOceanDeformer::id, hotOceanDeformer::creator,
+		hotOceanDeformer::initialize, MPxNode::kDeformerNode);
+
+	return s;
 }
 
 
 
 /**	De-registration of deformer node.
 */
-MStatus uninitializePlugin( MObject obj)
+MStatus uninitializePlugin(MObject obj)
 {
-	MStatus result;
-	MFnPlugin plugin( obj );
-	result = plugin.deregisterNode( hotOceanDeformer::id );
-	return result;
+	MStatus s;
+	MFnPlugin plugin(obj);
+	s = plugin.deregisterNode(hotOceanDeformer::id);
+	return s;
 }
 
