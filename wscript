@@ -1,16 +1,29 @@
+#!/usr/bin/python
 # vim: set filetype=python
+
+
+import waflib.Logs as L
+
+
+def dbg0(mod, msg):
+	if True:
+		L.info( "[WSCRIPT|%s]: (debug) %s" % (mod, str(msg)) )
+
 
 
 def options(opt):
 	opt.load("compiler_cxx")
-	opt.add_option('--maya', action='store', default='2011', help='Maya version to build for')
+	opt.add_option('--maya', action='store', default='2013', help='Maya version to build for')
 	opt.add_option('--arch', action='store', default='x64', help='Processor architecture to build for')
 
 
 
 def configure(cfg):
+
+	def dbg(msg):
+		dbg0('configure', msg)
+
 	import sys
-	print sys.platform
 	import os
 
 	cwd = os.getcwd().replace('\\', '/') # FUCK windows
@@ -19,18 +32,24 @@ def configure(cfg):
 	opt = cfg.options
 	arch = str(opt.arch).lower()
 	
+	dbg("sys.platform: %s" % sys.platform)
+	dbg("is_linux:     %s" % is_linux)
+	dbg("current dir:  %s" % cwd)
+	dbg("arch:         %s" % arch)
+
 	if not is_linux:
+
 		cfg.env['MSVC_VERSIONS'] = ['msvc 8.0', 'msvc 9.0', 'msvc 10.0']
+
 		if arch == "x86":
 			cfg.env['MSVC_TARGETS'] = ['x86']
 		else:
 			cfg.env['MSVC_TARGETS'] = ['x64']
+
 		cfg.load('msvc')
 	else:
-		#cfg.env['CC_VERSION'] = ('4', '1', '2')
-		#print cfg.env
 		cfg.load('compiler_cxx')
-		print cfg.env['CC_VERSION']
+		dbg("CC_VERSION: %s" % str(cfg.env['CC_VERSION']))
 
 
 	env = cfg.env
@@ -90,7 +109,6 @@ def configure(cfg):
 	# TODO: generate these absolute paths instead
 	#
 	if is_linux:
-		#libpath.append('./3rdparty/linux/lib/')
 		libpath.append('%s/3rdparty/linux/lib/' % cwd)
 	else:
 		libpath.append('%s/3rdparty/win64/' % cwd)
@@ -148,23 +166,27 @@ def configure(cfg):
 
 
 
+
 def build(bld):
+
+	import os
+
 	sources = []
 	env = bld.env	
 	is_linux = env['DEST_OS'] == 'linux'
 
-	print env
-	#print env['CC_VERSION']
-	
-	import os
+	#print env
+
 	for top, dirs, files in os.walk('./source/deformer'):
 		for nm in files:       
 			fp = os.path.join(top, nm)
 			spl = fp.split(".")
 			if spl[-1] == "cpp":
 				sources.append(fp)
+	
 	bld.shlib(source = sources, target="hotOceanDeformer")
 	pass
+
 
 
 
