@@ -172,7 +172,11 @@ MStatus hotOceanDeformer::initialize()
 	nAttr.setSoftMax(1000.0);
 	addAttribute( oceanDepth );
 
+	/*
 	time = uAttr.create( "time", "t", MFnUnitAttribute::kTime );
+	uAttr.setKeyable(true);
+	*/
+	time = nAttr.create( "time", "t", MFnNumericData::kDouble );
 	nAttr.setKeyable(true);
 	addAttribute(time);
 
@@ -240,6 +244,17 @@ MStatus hotOceanDeformer::initialize()
 	attributeAffects( doEPlus, outputGeom );
 
 	return MS::kSuccess;
+}
+
+
+
+MStatus hotOceanDeformer::accessoryNodeSetup( MDagModifier & cmd )
+{
+	MStatus			s;
+	MFnDependencyNode	this_dnode(thisMObject(), &s);
+	
+	s=cmd.commandToExecute("expression -s \""+this_dnode.name()+".time=time\";");
+	return s;
 }
 
 
