@@ -3,11 +3,14 @@
 		@file		hotOcean.cpp
 		@since		2012-10-26
 
-		@author		Nico Rehberg, Imre Tuske, Szabolcs Horvatth
+		@author		Nico Rehberg, Imre Tuske
 
 		@brief		Maya deformer to displace a surface using Houdini Ocean Toolkit (implementation).
 
 		Implementation: Nico Rehberg <mail@nico-rehberg.de>
+
+		Thanks to Szabolcs Horvatth and John Patrick for tips and
+		hints on colorsets-in-deformers hackery.
 
 		The Houdini Ocean Toolkit is copyrighted by Drew Whitehouse
 		see http://odforce.net/wiki/index.php/HoudiniOceanToolkit
@@ -312,7 +315,6 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 #define CHK(msg) if ( MS::kSuccess!=status ) { throw(msg); }
 
 	MStatus			status;
-	MStatus			s;
 
 	MFnDependencyNode	this_dnode(thisMObject(), &status);
 	MString			dnode_name = this_dnode.name(),
@@ -390,10 +392,10 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 			bool doVertexColors = vertexColorsData.asBool();
 
 			MDataHandle d;
-			d = block.inputValue(doJMinus, &s); bool do_jminus = d.asBool() && doVertexColors;
-			d = block.inputValue(doJPlus, &s);  bool do_jplus  = d.asBool() && doVertexColors;
-			d = block.inputValue(doEMinus, &s); bool do_eminus = d.asBool() && doVertexColors;
-			d = block.inputValue(doEPlus, &s);  bool do_eplus  = d.asBool() && doVertexColors;
+			d = block.inputValue(doJMinus, &status); bool do_jminus = d.asBool() && doVertexColors;
+			d = block.inputValue(doJPlus,  &status); bool do_jplus  = d.asBool() && doVertexColors;
+			d = block.inputValue(doEMinus, &status); bool do_eminus = d.asBool() && doVertexColors;
+			d = block.inputValue(doEPlus,  &status); bool do_eplus  = d.asBool() && doVertexColors;
 
 			doVertexColors = doVertexColors && (do_jminus || do_jplus || do_eminus || do_eplus);
 
@@ -435,7 +437,7 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 
 			// sum up the waves at this timestep
 			//
-			_ocean->update( time, *_ocean_context, true, (choppiness>0), false, do_jacobian,
+			_ocean->update( time, *_ocean_context, true, choppiness>0, false, do_jacobian,
 				_ocean_scale * waveHeight, choppiness);
 
 			unsigned int mIndex = plug.logicalIndex();
