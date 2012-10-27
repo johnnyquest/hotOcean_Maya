@@ -30,6 +30,7 @@
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnEnumAttribute.h>
 #include <maya/MFnUnitAttribute.h>
+#include <maya/MItMeshPolygon.h>
 
 
 #define M_PI 3.14159265358979323846
@@ -304,6 +305,7 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 #define CHK(msg) if ( MS::kSuccess!=status ) { throw(msg); }
 
 	MStatus			status;
+	MStatus			s;
 
 	MFnDependencyNode	this_dnode(thisMObject(), &status);
 	MString			dnode_name = this_dnode.name(),
@@ -380,6 +382,13 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 			CHK("Error getting do Vertex Colors data handle");
 			bool doVertexColors = vertexColorsData.asBool();
 
+			MDataHandle d;
+			d = block.inputValue(doJMinus, &s); bool do_jminus = d.asBool() && doVertexColors;
+			d = block.inputValue(doJPlus, &s);  bool do_jplus  = d.asBool() && doVertexColors;
+			d = block.inputValue(doEMinus, &s); bool do_eminus = d.asBool() && doVertexColors;
+			d = block.inputValue(doEPlus, &s);  bool do_eplus  = d.asBool() && doVertexColors;
+
+			doVertexColors = doVertexColors && (do_jminus || do_jplus || do_eminus || do_eplus);
 
 			bool do_jacobian = true || doVertexColors; // for vertex colors
 
@@ -446,119 +455,52 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 			const float envGlobalScale = env * globalScale;
 			const float oneOverGlobalScale = 1.0/globalScale;
 
-			const MColor black(0.0, 0.0, 0.0);
+			// jacobian arrays
+			//
+			MFloatArray jMinus, jPlus;
+			MColorArray eMinus, ePlus;
 
-			MColorArray
-				jMinus = MColorArray(nPoints, black),
-				jPlus = MColorArray(nPoints, black),
-				eMinus = MColorArray(nPoints, black),
-				ePlus = MColorArray(nPoints, black);
-
-			if (doVertexColors)
-			{
-				//Create one set per mel
-				char buffer[512];
-				//MString meshName = inputMesh.name();
-				//cout << inputMesh.name().asChar() << "  " << std::endl;
-				//sprintf_s( buffer, "polyColorSet -create -colorSet \"jMinus1\" %s",inputMesh.name().asChar());
-				//status = MGlobal::executeCommand(buffer);
-				//if (status != MS::kSuccess) MGlobal::displayError("Error creating colorSet");
-				//sprintf_s( buffer, "polyColorPerVertex -rgb 0.5 0.0 0.0 %s",inputMesh.name().asChar());
-				//status = MGlobal::executeCommand("polyColorPerVertex -rgb 0.5 0.0 0.0 " + inputMesh.name());
-				//if (status != MS::kSuccess) MGlobal::displayError("Error coloring colorSet");
-
-				MString cset_name;
-				cset_name = "jMinus";
-				status = inputMesh.createColorSetDataMesh(cset_name);
-				CHK("Error creating jMinus colorset.");
-
-				//sprintf_s( buffer, "polyColorPerVertex -rgb 0.5 0.0 0.0 %s",this->name().asChar());
-				//status = MGlobal::executeCommand(buffer);
-
-				//if (status != MS::kSuccess) MGlobal::displayError("Error coloring colorSet");
-				//sprintf_s( buffer, "setAttr \"%s.difs\" 0",inputMesh.name().asChar());
-				//cout << inputMesh.name() << std::endl;
-				//status = MGlobal::executeCommand("setAttr \"" + meshName + ".difs\" 0");
-
-
-				cset_name = "jPlus";
-				status = inputMesh.createColorSetDataMesh(cset_name);
-				CHK("Error creating jPlus colorset.");
-
-				cset_name = "eMinus";
-				status = inputMesh.createColorSetDataMesh(cset_name);
-				CHK("Error creating eMinus colorset.");
-
-				cset_name = "ePlus";
-				status = inputMesh.createColorSetDataMesh(cset_name);
-				CHK("Error creating ePlus colorset.");
-			}
-
-
-			if ((_initTangentSpace) && (deformSpace == 2))
-			{
-				//get the tangents, normas, uvs
-				_tangents.setLength(nPoints);
-				_normals.setLength(nPoints);
-				_binormals.setLength(nPoints);
-				_uList.setLength(nPoints);
-				_vList.setLength(nPoints);
-
-				MVector vec;
-				MIntArray vertexList;
-
-				for (int i=0; i<inputMesh.numPolygons(); i++)
-				{
-					vertexList.clear();
-					inputMesh.getPolygonVertices(i,vertexList);
-					for (unsigned int j=0; j<vertexList.length(); j++) {
-						inputMesh.getFaceVertexTangent (i, vertexList[j], vec);
-						_tangents[vertexList[j]] = vec.normal();
-						inputMesh.getFaceVertexNormal (i, vertexList[j], vec);
-						_normals[vertexList[j]] = vec.normal();
-						vec = _tangents[vertexList[j]]^_normals[vertexList[j]];
-						_binormals[vertexList[j]] = vec.normal();
-						inputMesh.getPolygonUV(i,j,_uList[vertexList[j]],_vList[vertexList[j]]);
-					}
-				}
-
-				_initTangentSpace = false;
-
-			} //if (_initTangentSpace)) && (deformSpace == 2)
-
-
-
-			if (_mesh_changed && doVertexColors)
-			{
-				_vertexNumberList.setLength(inputMesh.numFaceVertices());
-
-				MIntArray vertexList;
-				int colorIndex;
-
-				//create a list where [vertex per face number] = vertexNumber
-				for (int i=0; i<inputMesh.numPolygons(); i++)
-				{
-
-					// GET THE VERTEX INDICES FOR CURRENT FACE:
-					vertexList.clear();
-					inputMesh.getPolygonVertices(i,vertexList);
-
-					// ITERATE THROUGH EACH FACE VERTEX TO SEE IF EACH ONE BELONGS TO THE ORIGINAL VERTEX SELECTION:
-					for (unsigned j=0; j<vertexList.length(); j++)
-					{
-						inputMesh.getFaceVertexColorIndex(i,j,colorIndex);
-						_vertexNumberList[colorIndex] = vertexList[j];
-						//cout << "vertexId: " << vertexList[j] << " per Face Id " << colorIndex << std::endl;
-					}
-				}
-
-			} // if (doVertexColors)
+			if (do_jminus) jMinus.setLength(nPoints);
+			if (do_jplus)  jPlus.setLength(nPoints);
+			if (do_eminus) eMinus.setLength(nPoints);
+			if (do_eplus)  ePlus.setLength(nPoints);
 
 
 			_mesh_changed = false;
 
 			if (deformSpace == 2)
 			{
+				if ( _initTangentSpace )
+				{
+					//get the tangents, normas, uvs
+					_tangents.setLength(nPoints);
+					_normals.setLength(nPoints);
+					_binormals.setLength(nPoints);
+					_uList.setLength(nPoints);
+					_vList.setLength(nPoints);
+
+					MVector vec;
+					MIntArray vertexList;
+
+					for (int i=0; i<inputMesh.numPolygons(); i++)
+					{
+						vertexList.clear();
+						inputMesh.getPolygonVertices(i,vertexList);
+						for (unsigned int j=0; j<vertexList.length(); j++) {
+							inputMesh.getFaceVertexTangent (i, vertexList[j], vec);
+							_tangents[vertexList[j]] = vec.normal();
+							inputMesh.getFaceVertexNormal (i, vertexList[j], vec);
+							_normals[vertexList[j]] = vec.normal();
+							vec = _tangents[vertexList[j]]^_normals[vertexList[j]];
+							_binormals[vertexList[j]] = vec.normal();
+							inputMesh.getPolygonUV(i,j,_uList[vertexList[j]],_vList[vertexList[j]]);
+						}
+					}
+
+					_initTangentSpace = false;
+				}
+
+
 #pragma omp parallel for
 				for(int i=0; i<nPoints; ++i)
 				{
@@ -575,42 +517,13 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 					verts[i] += evaldata.disp[1] * envGlobalScale * _normals[i];
 					verts[i] += evaldata.disp[2] * envGlobalScale * _binormals[i];
 
-					if (doVertexColors)
-					{
-						jMinus.set(i,evaldata.Jminus,evaldata.Jminus,evaldata.Jminus);
-						jPlus.set(i,evaldata.Jplus,evaldata.Jplus,evaldata.Jplus);
-						eMinus.set(i,evaldata.Eminus[0],evaldata.Eminus[1],evaldata.Eminus[2]);
-						ePlus.set(i,evaldata.Eplus[0],evaldata.Eplus[1],evaldata.Eplus[2]);
+					if (doVertexColors) {
+						if (do_jminus) jMinus.set(evaldata.Jminus, i);
+						if (do_jplus)  jPlus.set(evaldata.Jplus, i);
+						if (do_eminus) eMinus.set(i, evaldata.Eminus[0], evaldata.Eminus[1], evaldata.Eminus[2]);
+						if (do_eplus)  ePlus.set( i, evaldata.Eplus[0],  evaldata.Eplus[1],  evaldata.Eplus[2]);
 					}
-
-
-				} // for
-
-				//for (int i = 0; i < vertexNumberList.length(); i++)
-				//cout << "i: " << i << " colorIndex " << vertexNumberList[i] << std::endl;
-
-
-
-				//if (setExists == 0)
-				//{
-
-				//}
-
-				/*inputMesh.getColorSetNames(existingColorSets);
-				for (int i=0; i<existingColorSets.length(); i++)
-				{
-					cout << "Found Set: " << existingColorSets[i].asChar() << std::endl;
-				}*/
-				//status = inputMesh.setCurrentColorSetName(setName);
-				//CHK("Error switching to colorset.");
-
-				//status = inputMesh.setFaceColors(jMinus, vertexNumberList);
-				//cout << "ColorNum " << jMinus.length() << " IndexNum "<< vertexNumberList.length() <<  std::endl;
-				//cout << "Current Set " << inputMesh.currentColorSetName().asChar() <<  std::endl;
-				//status = inputMesh.setFaceColors(jMinus, vertexNumberList);
-
-
-
+				}
 			}
 			else // object or worldspace
 			{
@@ -634,15 +547,12 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 					pt.y += evaldata.disp[1] * envGlobalScale;
 					pt.z += evaldata.disp[2] * envGlobalScale;
 
-					if (doVertexColors)
-					{
-						jMinus.set(i,evaldata.Jminus,evaldata.Jminus,evaldata.Jminus);
-						jPlus.set(i,evaldata.Jplus,evaldata.Jplus,evaldata.Jplus);
-						eMinus.set(i,evaldata.Eminus[0],evaldata.Eminus[1],evaldata.Eminus[2]);
-						ePlus.set(i,evaldata.Eplus[0],evaldata.Eplus[1],evaldata.Eplus[2]);
-						//cout << "Eminus " << evaldata.Eminus[0] << std::endl;
+					if (doVertexColors) {
+						if (do_jminus) jMinus.set(evaldata.Jminus, i);
+						if (do_jplus)  jPlus.set(evaldata.Jplus, i);
+						if (do_eminus) eMinus.set(i, evaldata.Eminus[0], evaldata.Eminus[1], evaldata.Eminus[2]);
+						if (do_eplus)  ePlus.set( i, evaldata.Eplus[0],  evaldata.Eplus[1],  evaldata.Eplus[2]);
 					}
-
 
 					if (deformSpace == 0)
 						pt *= worldSpace.inverse();
@@ -653,70 +563,65 @@ MStatus hotOceanDeformer::compute( const MPlug & plug, MDataBlock & block )
 			}
 
 			// write values back onto output using fast set method on iterator
+			//
 			inputMesh.setPoints(verts);
-			/*for (int i = 0; i < _vertexNumberList.length(); i++)
-						cout << "i: " << i << " colorIndex " << _vertexNumberList[i] << std::endl;*/
 
+
+			// write vertex colors (per-face vertex method)
+			//
 			if (doVertexColors)
 			{
-				//status = inputMesh.createColorSetDataMesh(setName);
-				//CHK("Error creating colorset.");
-				//MStringArray existingColorSets;
-				//inputMesh.getColorSetNames(existingColorSets);
-				////setExists = 0;
-				//for (int i=0; i<existingColorSets.length(); i++)
-				//{
-				//	cout << "Found Set: " << existingColorSets[i].asChar() << std::endl;
+				MColorArray	jm, jp, em, ep;
+				MIntArray	indices;
+				unsigned	nth=0;
 
-				//}
-				MString setName;
+				MItMeshPolygon pit(inputGeomDataH.asMesh(), &status);
+				CHK("couldn't get mesh poly iterator");
 
-				setName = MString("jMinus");
-				status = inputMesh.clearColors(&setName);
-				CHK("Error clearing colors.");
-				status = inputMesh.setColors(jMinus,&setName);
-				CHK("Error setting colors.");
-				status = inputMesh.assignColors(_vertexNumberList,&setName);
-				CHK("Error assigning colors.");
+				for( ;  !pit.isDone();  pit.next() )
+				{
+					for( unsigned v=0, vc=pit.polygonVertexCount();  v<vc;  ++v, ++nth )
+					{
+						unsigned int p = pit.vertexIndex(v);
 
-				setName = MString("jPlus");
-				status = inputMesh.clearColors(&setName);
-				CHK("Error clearing colors.");
-				status = inputMesh.setColors(jPlus,&setName);
-				CHK("Error setting colors.");
-				status = inputMesh.assignColors(_vertexNumberList,&setName);
-				CHK("Error assigning colors.");
+						if (do_jminus) jm.append(jMinus[p], jMinus[p], jMinus[p]);
+						if (do_jplus)  jp.append(jPlus[p],  jPlus[p],  jPlus[p]);
+						if (do_eminus) em.append(eMinus[p]);
+						if (do_eplus)  ep.append(ePlus[p]);
 
-				setName = MString("eMinus");
-				status = inputMesh.clearColors(&setName);
-				CHK("Error clearing colors.");
-				status = inputMesh.setColors(eMinus,&setName);
-				CHK("Error setting colors.");
-				status = inputMesh.assignColors(_vertexNumberList,&setName);
-				CHK("Error assigning colors.");
+						indices.append(nth);
+					}
+				}
 
-				setName = MString("ePlus");
-				status = inputMesh.clearColors(&setName);
-				CHK("Error clearing colors.");
-				status = inputMesh.setColors(ePlus,&setName);
-				CHK("Error setting colors.");
-				status = inputMesh.assignColors(_vertexNumberList,&setName);
-				CHK("Error assigning colors.");
+				MString cset;
 
-				//char buffer[512];
-				//sprintf_s( buffer, "polyOptions -colorShadedDisplay true %s",inputMesh.name().asChar());
-				//status = MGlobal::executeCommand(buffer);
-				//if (status != MS::kSuccess) MGlobal::displayError("Error displaying colors");
-
-				//inputMesh.cleanupEdgeSmoothing();
-				//status = inputMesh.updateSurface();
-				//CHK("Error redrawing.");
-				//status = inputMesh.setDisplayColors(true);
-				//CHK("Error displaying colors.");
-				//MColor temp = MColor(1.0f,0.0f,0.0f);
-				//inputMesh.setFaceColor(temp,0);
-				//status = inputMesh.setFaceColors(ePlus,_vertexNumberList);
-				//CHK("test.");
+				if (do_jminus) {
+					cset = "jMinus";
+					status = inputMesh.createColorSetDataMesh(cset);
+					inputMesh.setColors(jm, &cset);
+					inputMesh.assignColors(indices, &cset);
+				}
+				
+				if (do_jplus) {
+					cset = "jPlus";
+					status = inputMesh.createColorSetDataMesh(cset);
+					inputMesh.setColors(jp, &cset);
+					inputMesh.assignColors(indices, &cset);
+				}
+				
+				if (do_eminus) {
+					cset = "eMinus";
+					status = inputMesh.createColorSetDataMesh(cset);
+					inputMesh.setColors(em, &cset);
+					inputMesh.assignColors(indices, &cset);
+				}
+				
+				if (do_eplus) {
+					cset = "ePlus";
+					status = inputMesh.createColorSetDataMesh(cset);
+					inputMesh.setColors(ep, &cset);
+					inputMesh.assignColors(indices, &cset);
+				}
 			}
 		}
 	}
