@@ -1,0 +1,42 @@
+global proc AEhotOceanDeformerTemplate( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+	{
+		editorTemplate -beginLayout "Ocean Deformer Settings" -collapse false;
+		{
+			editorTemplate -addControl "globalScale";
+			editorTemplate -addControl "resolution";
+			editorTemplate -addControl "size";
+			editorTemplate -addControl "windSpeed";
+			editorTemplate -addControl "waveHeight";
+			editorTemplate -addControl "shortestWave";
+			editorTemplate -addControl "choppiness";
+			editorTemplate -addControl "windDirection";
+			editorTemplate -addControl "dampReflections";
+			editorTemplate -addControl "windAlign";
+			editorTemplate -addControl "oceanDepth";
+			editorTemplate -addControl "time";
+			editorTemplate -addControl "seed";
+			editorTemplate -beginNoOptimize;
+			editorTemplate -addControl "interpolation";
+			editorTemplate -addControl "vertexColor";
+			editorTemplate -endNoOptimize;
+			
+			editorTemplate -beginLayout "Ocean Deformer Settings" -collapse false;
+			{
+				editorTemplate -beginNoOptimize;
+				editorTemplate -addControl "doJMinus";
+				editorTemplate -addControl "doJPlus";
+				editorTemplate -addControl "doEMinus";
+				editorTemplate -addControl "doEPlus";
+				editorTemplate -endNoOptimize;
+			}
+			editorTemplate -endLayout;
+		}
+		editorTemplate -endLayout;
+
+		AEdependNodeTemplate $nodeName;
+		editorTemplate -addExtraControls;
+	}	
+	editorTemplate -endScrollLayout;
+}
