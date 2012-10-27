@@ -249,6 +249,13 @@ MStatus hotOceanDeformer::initialize()
 
 
 
+void hotOceanDeformer::postConstructor()
+{
+	setDeformationDetails(kDeformsColors);
+}
+
+
+
 MStatus hotOceanDeformer::accessoryNodeSetup( MDagModifier & cmd )
 {
 	MStatus			s;

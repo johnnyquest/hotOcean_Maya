@@ -65,6 +65,7 @@ public:
 	static void *		creator() { return new hotOceanDeformer(); }
 	static MStatus		initialize();
 
+	virtual void		postConstructor();
 	virtual MStatus		accessoryNodeSetup( MDagModifier & );
 	virtual MStatus		setDependentsDirty( const MPlug &, MPlugArray & );
 	virtual MStatus		compute( const MPlug &, MDataBlock & );
