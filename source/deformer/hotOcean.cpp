@@ -27,6 +27,11 @@
 #include <maya/MGlobal.h>
 #include <stdexcept>
 
+#include <maya/MFnNumericAttribute.h>
+#include <maya/MFnEnumAttribute.h>
+#include <maya/MFnUnitAttribute.h>
+
+
 #define M_PI 3.14159265358979323846
 
 MTypeId		hotOceanDeformer::id( 0x0007443a );
@@ -83,7 +88,10 @@ hotOceanDeformer::~hotOceanDeformer()
 */
 MStatus hotOceanDeformer::initialize()
 {
-	MFnNumericAttribute nAttr;
+	MFnNumericAttribute	nAttr;
+	MFnEnumAttribute	eAttr;
+	MFnUnitAttribute	uAttr;
+
 	globalScale=nAttr.create( "globalScale", "scale", MFnNumericData::kDouble  );
 	nAttr.setDefault(1.0);
 	nAttr.setKeyable(false);
@@ -164,12 +172,9 @@ MStatus hotOceanDeformer::initialize()
 	nAttr.setSoftMax(1000.0);
 	addAttribute( oceanDepth );
 
-	time = nAttr.create( "time", "t", MFnNumericData::kDouble );
-	nAttr.setDefault(0.0);
+	time = uAttr.create( "time", "t", MFnUnitAttribute::kTime );
 	nAttr.setKeyable(true);
-	nAttr.setSoftMin(0.0);
-	nAttr.setSoftMax(1000.0);
-	addAttribute( time );
+	addAttribute(time);
 
 	seed = nAttr.create( "seed", "s", MFnNumericData::kInt );
 	nAttr.setDefault(0);
@@ -184,7 +189,6 @@ MStatus hotOceanDeformer::initialize()
 	nAttr.setChannelBox(true);
 	addAttribute( interpolation );
 
-	MFnEnumAttribute eAttr;
 	deformSpace = eAttr.create( "space", "space", 0 );  // can set default 0, 1, 2, etc..
 	eAttr.setStorable(true);
 	eAttr.setKeyable(false);

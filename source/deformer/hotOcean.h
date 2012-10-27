@@ -40,8 +40,6 @@
 #include <maya/MDataBlock.h>
 #include <maya/MDataHandle.h>
 
-#include <maya/MFnNumericAttribute.h>
-#include <maya/MFnEnumAttribute.h>
 #include <maya/MFnPlugin.h>
 #include <maya/MFnDependencyNode.h>
 
