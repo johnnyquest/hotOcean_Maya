@@ -26,7 +26,7 @@ def configure(cfg):
 	import sys
 	import os
 
-	cwd = os.getcwd().replace('\\', '/') # FUCK windows
+	cwd = os.getcwd().replace('\\', '/') # F*CK windows
 	is_linux = not sys.platform[0:3] == "win"
 
 	opt = cfg.options
@@ -73,11 +73,18 @@ def configure(cfg):
 	
 	shared_path = ""
 	if is_linux:
+		# linux base path for Maya includes/libs
+		#
 		shared_path = "/U/development/_shared/libs/"
 	else:
+		# windows base path for Maya includes/libs
+		#
 		shared_path = "U:/development/_shared/libs/"
 
+	# MAYA INCLUDE PATH (you might need to edit this)
+	#
 	includes.append(shared_path+"maya/"+maya_version+"/include/")
+
 
 	# hot #1
 	#
@@ -92,7 +99,6 @@ def configure(cfg):
 	env.append_value('INCLUDES', includes)
 	
 	libpath = []
-
 	lib_arch = ""
 	
 	if is_linux:
@@ -103,10 +109,12 @@ def configure(cfg):
 		else:
 			lib_arch = "lib_win32/"
 
+	# MAYA LIBRARY PATH (you might need to edit this)
+	#
 	libpath.append(shared_path+"maya/"+maya_version+"/"+lib_arch)
 
+
 	# hot #3
-	# TODO: generate these absolute paths instead
 	#
 	if is_linux:
 		libpath.append('%s/3rdparty/linux/lib/' % cwd)
