@@ -3,7 +3,8 @@ hotOcean_Maya
 
 A Maya version of Drew Whitehouse's Houdini Ocean Toolkit (HOT).
 
-Most of the Maya-related code was written by Nico Rehberg.
+Original Maya-related code was written by Nico Rehberg.
+(http://www.nico-rehberg.de)
 
 Minor modifications and various code cleanups and cosmetics
 by Imre Tuske (sorted out build problems on linux;
